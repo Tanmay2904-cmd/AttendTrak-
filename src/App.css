@@ -1,0 +1,117 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+:root {
+  font-size: 16px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  :root {
+    font-size: 14px;
+  }
+  
+  /* Prevent zoom on input focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px; /* This prevents zoom on iOS */
+  }
+}
+
+/* Ensure tables are scrollable on mobile */
+@media (max-width: 768px) {
+  table {
+    font-size: 0.875rem;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Chart adjustments for mobile */
+@media (max-width: 640px) {
+  .chart-container {
+    height: 300px !important;
+  }
+}
+
+/* Grid adjustments */
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grid-3 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Card spacing */
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+  }
+}
+
+/* Button adjustments */
+@media (max-width: 640px) {
+  button {
+    min-height: 44px; /* iOS minimum touch target */
+    min-width: 44px;
+  }
+}
+
+
