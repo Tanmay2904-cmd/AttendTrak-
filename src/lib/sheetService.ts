@@ -8,10 +8,18 @@ interface SheetConfig {
   range: string;
 }
 
-const SHEET_CONFIG: SheetConfig = {
-  sheetId: import.meta.env.VITE_GOOGLE_SHEET_ID || '',
-  apiKey: import.meta.env.VITE_GOOGLE_SHEETS_API_KEY || '',
-  range: 'Sheet1!A2:F',
+const getSheetConfig = (): SheetConfig => {
+  return {
+    sheetId:
+      localStorage.getItem('global_sheet_id') ||
+      import.meta.env.VITE_GOOGLE_SHEET_ID ||
+      '',
+    apiKey:
+      localStorage.getItem('global_api_key') ||
+      import.meta.env.VITE_GOOGLE_SHEETS_API_KEY ||
+      '',
+    range: 'Sheet1!A2:F',
+  };
 };
 
 // ✅ Student name to rollNo mapping (for RFID data conversion)
@@ -235,8 +243,10 @@ export const fetchFromGoogleSheet = async (
  * Fetch attendance data using default config
  */
 export const fetchAttendanceFromSheet = async (): Promise<AttendanceRecord[]> => {
-  return fetchFromGoogleSheet(SHEET_CONFIG.sheetId, SHEET_CONFIG.apiKey, SHEET_CONFIG.range);
+  const config = getSheetConfig();
+  return fetchFromGoogleSheet(config.sheetId, config.apiKey, config.range);
 };
+
 
 /**
  * Filter attendance records based on user role
@@ -281,4 +291,33 @@ export default {
   fetchAttendanceFromSheet,
   filterAttendanceByRole,
   canViewAttendanceRecord,
+};
+/**
+ * Fetch users from Google Sheets (Users tab)
+ */
+export const fetchUsersFromSheet = async (): Promise<
+  { rollNo: string; name: string; email: string; password: string; role: 'admin' | 'user' }[]
+> => {
+  const config = getSheetConfig();
+
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${encodeURIComponent(
+    'Users!A2:E'
+  )}?key=${config.apiKey}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error?.message || 'Failed to fetch users');
+  }
+
+  const rows: string[][] = data.values || [];
+
+  return rows.map(row => ({
+    rollNo: row[0],
+    name: row[1],
+    email: row[2],
+    password: row[3],
+    role: (row[4] as 'admin' | 'user') || 'user',
+  }));
 };

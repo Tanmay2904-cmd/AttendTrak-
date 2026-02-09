@@ -92,9 +92,10 @@ export default function AdminSync() {
       }
 
       // Save to localStorage
-      localStorage.setItem('synced_attendance_data', JSON.stringify(records));
-      localStorage.setItem('synced_sheet_url', sheetUrl);
+      localStorage.setItem('global_sheet_id', sheetId);
       localStorage.setItem('google_sheets_api_key', apiKey);
+      localStorage.setItem('synced_sheet_url', sheetUrl);
+      
 
       // Add to sync history
       const newSync: SyncRecord = {
@@ -111,6 +112,8 @@ export default function AdminSync() {
       });
 
       console.log(`✅ Synced ${records.length} records`);
+      window.location.reload();
+
 
       setSheetUrl('');
     } catch (error: any) {

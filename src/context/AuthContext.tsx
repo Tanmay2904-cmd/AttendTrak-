@@ -1,3 +1,4 @@
+import { fetchUsersFromSheet } from '@/lib/sheetService';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole, AuthState } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -11,72 +12,12 @@ interface AuthContextType extends Omit<AuthState, 'user'> {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users database for demo
-let mockUsers: User[] = [
-  {
-    uid: 'admin-001',
-    name: 'Tanmay Naigaonkar(Admin)',
-    email: 'tanmay.naigaonkar29@gmail.com',
-    role: 'admin',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    uid: 'admin-002',
-    name: 'test admin',
-    email: 'test.admin@school.edu',
-    role: 'admin',
-    createdAt: new Date().toISOString(),
-  },
-  // ✅ FIXED: Changed from STU00X to ST00X to match Google Sheets
-  {
-    uid: 'user-001',
-    name: 'Tanmay Naigaonkar',
-    email: 'tanmay@school.edu',
-    role: 'user',
-    rollNo: 'ST001', // ✅ Matches Google Sheets
-    createdAt: new Date().toISOString(),
-  },
-  {
-    uid: 'user-002',
-    name: 'Vinayak Mankar',
-    email: 'vinayakmankar@gmail.com',
-    role: 'user',
-    rollNo: 'ST002', // ✅ Matches Google Sheets
-    createdAt: new Date().toISOString(),
-  },
-  {
-    uid: 'user-003',
-    name: 'Rohan Todkar',
-    email: 'rohantodkar@gmail.com',
-    role: 'user',
-    rollNo: 'ST003', // ✅ Matches Google Sheets
-    createdAt: new Date().toISOString(),
-  },
-  {
-    uid: 'user-004',
-    name: 'Sakshi Upadhye',
-    email: 'sakshiupadhye@gmail.com',
-    role: 'user',
-    rollNo: 'ST004', // ✅ Matches Google Sheets
-    createdAt: new Date().toISOString(),
-  },
-  {
-    uid: 'user-005',
-    name: 'Rahul Jain',
-    email: 'rahuljain@gmail.com',
-    role: 'user',
-    rollNo: 'ST005', // ✅ Matches Google Sheets
-    createdAt: new Date().toISOString(),
-  },
-  {
-    uid: 'user-006',
-    name: 'Rishikesh Nautiyal',
-    email: 'rishikeshnautiyal@gmail.com',
-    role: 'user',
-    rollNo: 'ST006', // ✅ Matches Google Sheets
-    createdAt: new Date().toISOString(),
-  },
-];
+const SUPER_ADMIN = {
+  email: "superadmin@system.com",
+  password: "123",
+  name: "Super Admin",
+  role: "admin" as const,
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>({
@@ -85,12 +26,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: false,
     isLoading: true,
   });
+
   const { toast } = useToast();
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const storedToken = localStorage.getItem('token');
-    
+
     if (storedUser && storedToken) {
       try {
         const user = JSON.parse(storedUser);
@@ -101,8 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isLoading: false,
         });
       } catch {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        localStorage.clear();
         setAuthState(prev => ({ ...prev, isLoading: false }));
       }
     } else {
@@ -112,28 +53,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const emailKey = email.toLowerCase().trim();
-      const user = mockUsers.find(u => u.email === emailKey);
-      
-      if (!user) {
+      const sheetUsers = await fetchUsersFromSheet();
+
+      const matched = sheetUsers.find(
+        u => u.email.toLowerCase().trim() === emailKey && u.password === password
+      );
+
+      // SUPER ADMIN fallback
+      if (!matched) {
+        if (emailKey === SUPER_ADMIN.email && password === SUPER_ADMIN.password) {
+          const superUser: User = {
+            uid: "super-admin",
+            name: SUPER_ADMIN.name,
+            email: SUPER_ADMIN.email,
+            role: "admin",
+            createdAt: new Date().toISOString(),
+          };
+
+          const token = `mock-token-${Date.now()}`;
+
+          localStorage.setItem("user", JSON.stringify(superUser));
+          localStorage.setItem("token", token);
+
+          setAuthState({
+            user: superUser,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+
+          toast({
+            title: "Super Admin Login",
+            description: "Logged in using bootstrap admin credentials.",
+          });
+
+          return true;
+        }
+
         toast({
-          variant: 'destructive',
-          title: 'Login Failed',
-          description: 'Email not found.',
+          variant: "destructive",
+          title: "Login Failed",
+          description: "Invalid email or password.",
         });
+
         return false;
       }
 
-      console.log('✅ Login successful:', { name: user.name, role: user.role, rollNo: user.rollNo });
+      const user: User = {
+        uid: `sheet-${matched.rollNo}`,
+        name: matched.name,
+        email: matched.email,
+        role: matched.role,
+        rollNo: matched.role === "user" ? matched.rollNo : undefined,
+        createdAt: new Date().toISOString(),
+      };
 
       const token = `mock-token-${Date.now()}`;
-      
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('token', token);
-      localStorage.setItem('role', user.role);
-      localStorage.setItem('uid', user.uid);
+
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", token);
 
       setAuthState({
         user,
@@ -143,123 +124,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       toast({
-        title: 'Welcome back!',
+        title: "Welcome back!",
         description: `Logged in as ${user.name}`,
       });
 
       return true;
+
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
+
       toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: 'An error occurred during login.',
+        variant: "destructive",
+        title: "Login Failed",
+        description: "An error occurred during login.",
       });
+
       return false;
     }
   };
 
-  const register = async (
-    name: string, 
-    email: string, 
-    password: string, 
-    role: UserRole,
-    rollNo?: string
-  ): Promise<boolean> => {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const emailKey = email.toLowerCase().trim();
-
-      if (mockUsers.find(u => u.email === emailKey)) {
-        toast({
-          variant: 'destructive',
-          title: 'Registration Failed',
-          description: 'Email already exists.',
-        });
-        return false;
-      }
-
-      // ✅ Check if student with same rollNo already registered
-      if (role === 'user' && rollNo) {
-        console.log('🔍 Checking registration for rollNo:', rollNo);
-        console.log('📋 Existing users:', mockUsers.map(u => ({ name: u.name, rollNo: u.rollNo })));
-        
-        const existingStudent = mockUsers.find(u => u.rollNo === rollNo && u.role === 'user');
-        
-        if (existingStudent) {
-          console.log('❌ Student already registered:', existingStudent);
-          toast({
-            variant: 'destructive',
-            title: 'Already Registered',
-            description: `${name} is already registered with email: ${existingStudent.email}`,
-          });
-          return false;
-        } else {
-          console.log('✅ Student not found, can register');
-        }
-      }
-
-      const newUser: User = {
-        uid: `user-${Date.now()}`,
-        name,
-        email,
-        role,
-        rollNo: role === 'user' ? rollNo : undefined,
-        createdAt: new Date().toISOString(),
-      };
-
-      mockUsers = [...mockUsers, newUser];
-
-      console.log('✅ Registration successful:', { name: newUser.name, role: newUser.role, rollNo: newUser.rollNo });
-
-      const token = `mock-token-${Date.now()}`;
-      
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('token', token);
-      localStorage.setItem('role', newUser.role);
-      localStorage.setItem('uid', newUser.uid);
-
-      setAuthState({
-        user: newUser,
-        token,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-
-      toast({
-        title: 'Account Created!',
-        description: 'Your account has been successfully created.',
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Register error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Registration Failed',
-        description: 'An error occurred during registration.',
-      });
-      return false;
-    }
+  const register = async (): Promise<boolean> => {
+    toast({
+      title: "Disabled",
+      description: "Registration via Google Sheet only.",
+    });
+    return false;
   };
 
   const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('uid');
-
+    localStorage.clear();
     setAuthState({
       user: null,
       token: null,
       isAuthenticated: false,
       isLoading: false,
-    });
-
-    toast({
-      title: 'Logged Out',
-      description: 'You have been successfully logged out.',
     });
   };
 
@@ -272,8 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 }
