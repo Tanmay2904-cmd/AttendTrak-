@@ -79,7 +79,7 @@ export default function AdminSync() {
     }, 5 * 60 * 1000); // 5 minutes
 
     return () => clearInterval(autoSyncInterval);
-  }, []);
+  }, [user?.uid]);
 
   const loadClassSheets = () => {
     const sheets: ClassSheet[] = JSON.parse(
@@ -90,6 +90,7 @@ export default function AdminSync() {
     // Auto-select first class
     if (sheets.length > 0 && !selectedClass) {
       setSelectedClass(sheets[0].id);
+      localStorage.setItem('current_selected_class', sheets[0].id); // ✅ SET HERE
       loadClassData(sheets[0].id);
     }
   };
@@ -166,6 +167,7 @@ export default function AdminSync() {
 
       setClassSheets(updated);
       setSelectedClass(newClassSheet.id);
+      localStorage.setItem('current_selected_class', newClassSheet.id); // ✅ SET HERE
 
       // Add to sync history
       const newSync: SyncRecord = {
@@ -263,6 +265,7 @@ export default function AdminSync() {
     if (selectedClass === classId) {
       setSelectedClass(updated.length > 0 ? updated[0].id : '');
       if (updated.length > 0) {
+        localStorage.setItem('current_selected_class', updated[0].id); // ✅ SET HERE
         loadClassData(updated[0].id);
       }
     }
@@ -285,6 +288,50 @@ export default function AdminSync() {
     });
   };
 
+  // Super Admin view
+  if (isSuperAdmin) {
+    return (
+      <div className="space-y-6 sm:space-y-8 animate-fade-in w-full">
+        <div className="px-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Sync Management (Super Admin)</h1>
+          <p className="text-xs sm:text-base text-muted-foreground mt-1">
+            View all synced classes from teachers
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>All Teacher Classes</CardTitle>
+            <CardDescription>Classes synced by all teachers</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {classSheets.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">No classes synced yet</p>
+            ) : (
+              <div className="space-y-3">
+                {classSheets.map((sheet) => (
+                  <div key={sheet.id} className="border p-4 rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <p className="font-semibold">{sheet.className}</p>
+                        <p className="text-sm text-muted-foreground">Teacher ID: {sheet.adminId}</p>
+                      </div>
+                      <Badge variant="outline">{sheet.recordsCount} records</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Last synced: {sheet.lastSyncedAt}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Regular Teacher view
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in w-full">
       {/* Header */}
@@ -392,6 +439,7 @@ export default function AdminSync() {
                   }`}
                   onClick={() => {
                     setSelectedClass(sheet.id);
+                    localStorage.setItem('current_selected_class', sheet.id); // ✅ SET HERE
                     loadClassData(sheet.id);
                   }}
                 >
@@ -498,6 +546,80 @@ export default function AdminSync() {
           </CardContent>
         </Card>
       )}
+
+      {/* Setup Guide */}
+      <Card>
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="text-lg sm:text-xl">Setup Guide</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">How to connect Google Sheets with AttendTrack</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 sm:space-y-4">
+            <div>
+              <h3 className="font-semibold text-sm sm:text-base mb-2">Step 1: Create Google Sheet</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                Create a Google Sheet with attendance data in one of these formats:
+              </p>
+              
+              {/* Manual Format */}
+              <div className="bg-slate-100 p-2 sm:p-3 rounded text-[10px] sm:text-xs font-mono overflow-x-auto mb-3">
+                <p className="font-semibold mb-2 text-slate-700">Format 1: Manual Entry</p>
+                <div className="bg-white p-2 rounded mb-2 overflow-x-auto">
+                  <div className="font-bold text-slate-600 mb-1 whitespace-nowrap">
+                    ROLL_NO | NAME | DATE | TIME | STATUS
+                  </div>
+                  <div className="text-slate-500 space-y-0.5">
+                    <div className="whitespace-nowrap">ST001 | Tanmay | 2026-01-31 | 08:00 | present</div>
+                    <div className="whitespace-nowrap">ST002 | Vinayak | 2026-01-31 | 08:15 | present</div>
+                  </div>
+                </div>
+                <p className="text-[10px] text-slate-600">✅ Format: YYYY-MM-DD | Status: present/absent/late</p>
+              </div>
+
+              {/* RFID Format */}
+              <div className="bg-blue-50 p-2 sm:p-3 rounded text-[10px] sm:text-xs font-mono overflow-x-auto">
+                <p className="font-semibold mb-2 text-blue-700">Format 2: RFID System</p>
+                <div className="bg-white p-2 rounded mb-2 overflow-x-auto">
+                  <div className="font-bold text-blue-600 mb-1 whitespace-nowrap">
+                    DATE | TIME | NAME
+                  </div>
+                  <div className="text-blue-500 space-y-0.5">
+                    <div className="whitespace-nowrap">30/04/2025 | 01:30:18 | Rohan</div>
+                    <div className="whitespace-nowrap">30/04/2025 | 02:41:07 | Sakshi</div>
+                  </div>
+                </div>
+                <p className="text-[10px] text-blue-600">
+                  ✅ Auto-converts | Before 8:30 AM = Present, 8:30-9:00 AM = Late
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Step 2: Get API Key</h3>
+                <Button variant="outline" size="sm" asChild className="w-full text-xs sm:text-sm">
+                  <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer">
+                    Open Google Cloud Console
+                  </a>
+                </Button>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-sm mb-2">Step 3: Share Sheet</h3>
+                <p className="text-xs text-muted-foreground">
+                  Set &quot;Anyone with the link can view&quot;
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-2 sm:p-3">
+              <p className="text-[10px] sm:text-xs text-yellow-900">
+                <strong>Note:</strong> Your API key is stored locally in your browser.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

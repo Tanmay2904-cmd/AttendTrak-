@@ -3,25 +3,63 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { AttendanceBarChart } from '@/components/charts/AttendanceBarChart';
 import { AttendanceLineChart } from '@/components/charts/AttendanceLineChart';
 import { AttendancePieChart } from '@/components/charts/AttendancePieChart';
-import { getMonthlyAttendance } from '@/data/mockData';
-import { fetchAttendanceFromSheet } from '@/lib/sheetService'; // ✅ Use sheetService
+import { calculateMonthlyAttendance } from '@/lib/attendanceCalculations';
 import { Progress } from '@/components/ui/progress';
-import { Loader } from 'lucide-react';
-import { StudentAttendance } from '@/types';
+import { Loader, AlertCircle } from 'lucide-react';
+import { StudentAttendance, AttendanceRecord, MonthlyAttendance } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+
+interface ClassSheet {
+  id: string;
+  className: string;
+}
 
 export default function AdminAnalytics() {
+  const { user } = useAuth();
   const [studentStats, setStudentStats] = useState<StudentAttendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const monthlyData = getMonthlyAttendance();
+  const [monthlyData, setMonthlyData] = useState<MonthlyAttendance[]>([]);
+  const [currentClass, setCurrentClass] = useState<string>('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const attendanceRecords = await fetchAttendanceFromSheet();
-        
-        // Transform to student stats (same as AdminStudents)
+        setError(null);
+
+        // Get selected class
+        const selectedClassId = localStorage.getItem('current_selected_class');
+        if (!selectedClassId) {
+          throw new Error('No class selected. Please add a class first.');
+        }
+
+        // Get class info
+        const classSheets: ClassSheet[] = JSON.parse(
+          localStorage.getItem(`class_sheets_${user?.uid}`) || '[]'
+        );
+
+        const selectedClassData = classSheets.find(c => c.id === selectedClassId);
+        if (!selectedClassData) {
+          throw new Error('Selected class not found');
+        }
+
+        setCurrentClass(selectedClassData.className);
+
+        // Get attendance records for this class
+        const attendanceRecords: AttendanceRecord[] = JSON.parse(
+          localStorage.getItem(`class_data_${selectedClassId}`) || '[]'
+        );
+
+        if (!attendanceRecords || attendanceRecords.length === 0) {
+          throw new Error(`No data for ${selectedClassData.className}`);
+        }
+
+        // Calculate monthly data
+        const monthly = calculateMonthlyAttendance(attendanceRecords);
+        setMonthlyData(monthly);
+
+        // Transform to student stats
         const studentMap = new Map<string, StudentAttendance>();
         
         attendanceRecords.forEach(record => {
@@ -65,7 +103,6 @@ export default function AdminAnalytics() {
         });
         
         setStudentStats(students);
-        setError(null);
       } catch (err) {
         console.error('Error:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -75,7 +112,7 @@ export default function AdminAnalytics() {
     };
 
     fetchData();
-  }, []);
+  }, [user?.uid]);
 
   if (loading) {
     return (
@@ -95,7 +132,26 @@ export default function AdminAnalytics() {
         </div>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-center text-destructive py-8">Error: {error}</p>
+            <div className="flex items-center gap-2 text-destructive py-8">
+              <AlertCircle className="w-5 h-5" />
+              <p>Error: {error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!studentStats || studentStats.length === 0) {
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+          <p className="text-muted-foreground mt-1">Class: <span className="font-semibold">{currentClass}</span></p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground py-8">No student data available</p>
           </CardContent>
         </Card>
       </div>
@@ -119,27 +175,11 @@ export default function AdminAnalytics() {
     ? studentStats.filter(s => s.isDefaulter)
     : [];
 
-  if (!studentStats || studentStats.length === 0) {
-    return (
-      <div className="space-y-8 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground mt-1">Detailed attendance analytics and insights</p>
-        </div>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-center text-muted-foreground py-8">No data available. Check your Google Sheet connection.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-        <p className="text-muted-foreground mt-1">Detailed attendance analytics and insights</p>
+        <p className="text-muted-foreground mt-1">Class: <span className="font-semibold">{currentClass}</span></p>
       </div>
 
       {/* Summary Stats */}
@@ -176,7 +216,7 @@ export default function AdminAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Monthly Trends</CardTitle>
-            <CardDescription>Attendance patterns over the year</CardDescription>
+            <CardDescription>Attendance patterns over time</CardDescription>
           </CardHeader>
           <CardContent>
             <AttendanceLineChart data={monthlyData} />
@@ -186,7 +226,7 @@ export default function AdminAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Monthly Comparison</CardTitle>
-            <CardDescription>Bar chart comparison of attendance</CardDescription>
+            <CardDescription>Bar chart comparison</CardDescription>
           </CardHeader>
           <CardContent>
             <AttendanceBarChart data={monthlyData} />
@@ -214,7 +254,7 @@ export default function AdminAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Top Performers</CardTitle>
-            <CardDescription>Students with highest attendance</CardDescription>
+            <CardDescription>Highest attendance</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -240,7 +280,7 @@ export default function AdminAnalytics() {
         <Card>
           <CardHeader>
             <CardTitle>Attention Required</CardTitle>
-            <CardDescription>Students below 75% attendance</CardDescription>
+            <CardDescription>Below 75% attendance</CardDescription>
           </CardHeader>
           <CardContent>
             {defaulters.length === 0 ? (

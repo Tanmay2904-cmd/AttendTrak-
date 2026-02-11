@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { cn } from '@/lib/utils';
+import { ClassSelector } from '@/components/ClassSelector';
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -14,6 +15,9 @@ export function DashboardLayout() {
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         menuOpen={sidebarOpen}
       />
+      <div className="bg-card border-b border-border px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3">
+  <ClassSelector />
+</div>
       
       {/* Main container with flex */}
       <div className="flex flex-1 overflow-hidden w-full relative">

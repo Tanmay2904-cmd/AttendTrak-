@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import SuperAdminDashboard from '@/pages/admin/SuperAdminDashboard';
 
 // Pages
 import Index from "./pages/Index";
@@ -17,7 +18,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAttendance from "./pages/admin/AdminAttendance";
 import AdminStudents from "./pages/admin/AdminStudents";
-import AdminSync from "./pages/admin/AdminSync";
+import AdminSync from "./pages/admin/AdminSync-final";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
 
@@ -40,6 +41,11 @@ const App = () => (
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+
+              {/* Admin Dashboard and Super Admin Panel */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/super-admin" element={<SuperAdminDashboard />} />  
 
               {/* Admin Routes */}
               <Route
