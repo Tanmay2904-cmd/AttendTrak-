@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { AttendanceTable } from '@/components/dashboard/AttendanceTable';
 import { AttendanceLineChart } from '@/components/charts/AttendanceLineChart';
 import { useAuth } from '@/context/AuthContext';
-import { fetchAttendanceFromSheet } from '@/lib/sheetService';
+import { fetchFromGoogleSheet, fetchAttendanceFromSheet } from '@/lib/sheetService';
 import { calculateMonthlyAttendance } from '@/lib/attendanceCalculations'; // ✅ Real calculations
 import { AttendanceRecord, MonthlyAttendance } from '@/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -33,7 +33,7 @@ export default function UserAttendance() {
 
         const userRecords = allRecords.filter(record => record.rollNo === userRollNo);
         setAttendance(userRecords);
-        
+
         // ✅ Calculate monthly data from user's records
         const monthly = calculateMonthlyAttendance(userRecords);
         setMonthlyData(monthly);
@@ -78,7 +78,7 @@ export default function UserAttendance() {
       <Alert className="border-blue-200 bg-blue-50">
         <Shield className="h-4 w-4" />
         <AlertDescription className="text-blue-900">
-          <strong>Protected Data:</strong> You can only view your own attendance records. 
+          <strong>Protected Data:</strong> You can only view your own attendance records.
           All data is encrypted and only accessible to authorized users.
         </AlertDescription>
       </Alert>

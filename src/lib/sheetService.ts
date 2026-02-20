@@ -48,6 +48,14 @@ const nameToRollNoMap = new Map<string, string>([
 ]);
 
 /**
+ * Extract Sheet ID from a full Google Sheets URL
+ */
+export const extractSheetIdFromUrl = (url: string): string | null => {
+  const matches = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return matches ? matches[1] : null;
+};
+
+/**
  * Parse RFID format (DATE | TIME | NAME)
  * Input: "30/04/2025 | 01:30:18 | Rohan"
  * Output: {date: "2025-04-30", time: "01:30:18", name: "Rohan"}
@@ -162,7 +170,7 @@ export const fetchFromGoogleSheet = async (
     const records: AttendanceRecord[] = [];
     const processedKeys = new Set<string>(); // Track duplicates
 
-    rows.forEach((row: any[], idx: number) => {
+    rows.forEach((row: string[], idx: number) => {
       if (!row || row.length < 3) return;
 
       // ✅ Try parsing as manual format first (ST001 | Name | Date | Time | Status)
@@ -194,7 +202,7 @@ export const fetchFromGoogleSheet = async (
         if (!rollNo) {
           rollNo = nameToRollNoMap.get(rfidEntry.name.toLowerCase());
         }
-        
+
         if (rollNo) {
           const key = `${rollNo}-${rfidEntry.date}-${rfidEntry.time}`;
           if (!processedKeys.has(key)) {
@@ -296,12 +304,12 @@ export default {
  * Fetch users from Google Sheets (Users tab)
  */
 export const fetchUsersFromSheet = async (): Promise<
-  { rollNo: string; name: string; email: string; password: string; role: 'admin' | 'user' }[]
+  { rollNo: string; name: string; email: string; password: string; role: 'admin' | 'user'; sheetId?: string }[]
 > => {
   const config = getSheetConfig();
 
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${encodeURIComponent(
-    'Users!A2:E'
+    'Users!A2:F'
   )}?key=${config.apiKey}`;
 
   const res = await fetch(url);
@@ -319,5 +327,6 @@ export const fetchUsersFromSheet = async (): Promise<
     email: row[2],
     password: row[3],
     role: (row[4] as 'admin' | 'user') || 'user',
+    sheetId: row[5] || undefined,
   }));
 };

@@ -6,7 +6,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { AttendancePieChart } from '@/components/charts/AttendancePieChart';
 import { AttendanceTable } from '@/components/dashboard/AttendanceTable';
 import { useAuth } from '@/context/AuthContext';
-import { fetchAttendanceFromSheet } from '@/lib/sheetService';
+import { fetchFromGoogleSheet } from '@/lib/sheetService';
 import { AttendanceRecord } from '@/types';
 import { Calendar, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
 
@@ -35,7 +35,16 @@ export default function UserDashboard() {
     const loadUserAttendance = async () => {
       try {
         // Get all attendance records from Google Sheets
-        const allRecords = await fetchAttendanceFromSheet();
+        // Use user's specific sheet if available, otherwise default
+        const sheetId = user?.sheetUrl || import.meta.env.VITE_GOOGLE_SHEET_ID;
+        const apiKey = user?.apiKey || import.meta.env.VITE_GOOGLE_SHEETS_API_KEY;
+
+        if (!sheetId || !apiKey) {
+          console.error("Missing sheet config");
+          return;
+        }
+
+        const allRecords = await fetchFromGoogleSheet(sheetId, apiKey);
 
         // Filter by user's rollNo
         const userRollNo = user?.rollNo;
@@ -53,7 +62,7 @@ export default function UserDashboard() {
         const lateDays = filtered.filter(r => r.status === 'late').length;
         const totalDays = filtered.length;
 
-        const percentage = totalDays > 0 
+        const percentage = totalDays > 0
           ? Math.round(((presentDays + lateDays) / totalDays) * 100)
           : 0;
 
@@ -142,8 +151,8 @@ export default function UserDashboard() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3 sm:space-y-4">
-          <Progress 
-            value={stats.percentage} 
+          <Progress
+            value={stats.percentage}
             className="h-3 sm:h-4"
           />
           <div className="flex justify-between text-[10px] sm:text-xs text-muted-foreground">

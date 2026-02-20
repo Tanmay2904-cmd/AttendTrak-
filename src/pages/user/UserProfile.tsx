@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
-import { fetchAttendanceFromSheet } from '@/lib/sheetService';
+import { fetchFromGoogleSheet } from '@/lib/sheetService';
 import { calculateUserStats } from '@/lib/attendanceCalculations'; // ✅ Real calculations
 import { User, Mail, Hash, Calendar, Award, AlertTriangle, Loader } from 'lucide-react';
 
@@ -17,16 +17,21 @@ export default function UserProfile() {
     isDefaulter: false,
   });
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     const loadStats = async () => {
       try {
         setLoading(true);
-        
+
         // ✅ Fetch from Google Sheets
-        const allRecords = await fetchAttendanceFromSheet();
+        const sheetId = user?.sheetUrl || import.meta.env.VITE_GOOGLE_SHEET_ID;
+        const apiKey = user?.apiKey || import.meta.env.VITE_GOOGLE_SHEETS_API_KEY;
+
+        if (!sheetId || !apiKey) return;
+
+        const allRecords = await fetchFromGoogleSheet(sheetId, apiKey);
         const userRollNo = user?.rollNo;
-        
+
         if (userRollNo) {
           const userRecords = allRecords.filter(r => r.rollNo === userRollNo);
           const calculatedStats = calculateUserStats(userRecords);
@@ -38,7 +43,7 @@ export default function UserProfile() {
         setLoading(false);
       }
     };
-    
+
     loadStats();
   }, [user?.rollNo]);
 
@@ -80,7 +85,7 @@ export default function UserProfile() {
               </div>
               <h2 className="text-xl font-bold mt-4">{user?.name || 'Student'}</h2>
               <p className="text-muted-foreground">{user?.email || 'student@school.edu'}</p>
-              
+
               <div className="mt-4">
                 {stats.isDefaulter ? (
                   <Badge variant="danger" className="px-4 py-2">
@@ -144,10 +149,10 @@ export default function UserProfile() {
                 <p className="font-medium">
                   {(user as any)?.createdAt
                     ? new Date((user as any).createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })
                     : 'January 2024'
                   }
                 </p>

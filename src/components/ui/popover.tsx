@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-interface PopoverProps extends React.HTMLAttributes<HTMLDivElement> {}
+type PopoverProps = React.HTMLAttributes<HTMLDivElement>;
 
 const Popover = React.forwardRef<HTMLDivElement, PopoverProps>(
   ({ className, ...props }, ref) => (

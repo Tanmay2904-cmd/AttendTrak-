@@ -1,6 +1,6 @@
 // src/pages/admin/SuperAdminDashboard.tsx
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,7 +73,7 @@ export default function SuperAdminDashboard() {
     setApiKey(key);
   };
 
-  const handleCreateAdmin = () => {
+  const handleCreateAdmin = async () => {
     if (!adminName || !adminEmail || !adminPassword || !schoolName) {
       toast({
         variant: 'destructive',
@@ -83,34 +83,66 @@ export default function SuperAdminDashboard() {
       return;
     }
 
-    if (admins.some(a => a.email === adminEmail)) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Email already exists',
-      });
-      return;
-    }
-
     setIsCreating(true);
 
     try {
+      // 1. Initialize secondary app to avoid logging out super admin
+      const { initializeApp, getApps, deleteApp } = await import("firebase/app");
+      const { getAuth, createUserWithEmailAndPassword, signOut } = await import("firebase/auth");
+      const { doc, setDoc } = await import("firebase/firestore");
+      const { db, firebaseConfig } = await import("@/Firebase");
+
+      // Use a unique name for the secondary app
+      const secondaryAppName = "secondaryApp";
+      let secondaryApp = getApps().find(app => app.name === secondaryAppName);
+      if (!secondaryApp) {
+        secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+      }
+
+      const secondaryAuth = getAuth(secondaryApp);
+
+      // 2. Create User in Firebase Auth
+      const userCred = await createUserWithEmailAndPassword(secondaryAuth, adminEmail, adminPassword);
+      const newUid = userCred.user.uid;
+
+      // 3. Save to Firestore (this is what AuthContext looks for)
+      const newAdminData = {
+        uid: newUid,
+        adminName: adminName,
+        email: adminEmail,
+        role: 'admin',
+        schoolName: schoolName,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.uid,
+        sheetUrl: '', // To be filled by the teacher
+        apiKey: '',
+      };
+
+      await setDoc(doc(db, "users", newUid), newAdminData);
+
+      // 4. Cleanup secondary auth
+      await signOut(secondaryAuth);
+      // Optional: await deleteApp(secondaryApp); // Can keep it cached or delete
+
+      // 5. Update Local State (display purposes)
       const newAdmin: AdminUser = {
-        id: `admin-${Date.now()}`,
+        id: newUid,
         name: adminName,
         email: adminEmail,
-        password: adminPassword,
+        password: '***', // Don't store plain password locally
         schoolName: schoolName,
         createdAt: new Date().toISOString(),
       };
 
       const updated = [...admins, newAdmin];
+      // We still update local state for immediate UI feedback, 
+      // but strictly relying on Firestore query would be better in next iteration.
       localStorage.setItem('admin_users', JSON.stringify(updated));
       setAdmins(updated);
 
       toast({
         title: 'Admin Created! ✅',
-        description: `${adminName} can login with ${adminEmail}`,
+        description: `${adminName} account created in Firebase & Firestore.`,
       });
 
       // Reset form
@@ -118,11 +150,12 @@ export default function SuperAdminDashboard() {
       setAdminEmail('');
       setAdminPassword('');
       setSchoolName('');
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Creation error:", error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to create admin',
+        description: error.message || 'Failed to create admin',
       });
     } finally {
       setIsCreating(false);
@@ -152,7 +185,7 @@ export default function SuperAdminDashboard() {
       }
 
       const records = await fetchFromGoogleSheet(sheet.sheetId, apiKey);
-      
+
       toast({
         title: 'Data Loaded',
         description: `${records.length} records from ${sheet.adminName}'s sheet`,
@@ -374,8 +407,8 @@ export default function SuperAdminDashboard() {
                             record.status === 'present'
                               ? 'default'
                               : record.status === 'late'
-                              ? 'secondary'
-                              : 'destructive'
+                                ? 'secondary'
+                                : 'destructive'
                           }
                         >
                           {record.status}

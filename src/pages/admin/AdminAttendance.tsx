@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AttendanceTable } from '@/components/dashboard/AttendanceTable';
@@ -6,19 +6,15 @@ import { AttendanceRecord } from '@/types';
 import { Download, FileSpreadsheet, Loader, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
-
-interface ClassSheet {
-  id: string;
-  className: string;
-}
+import { useClass } from '@/context/ClassContext';
 
 export default function AdminAttendance() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { selectedClass } = useClass();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentClass, setCurrentClass] = useState<string>('');
 
   useEffect(() => {
     const loadAttendanceData = async () => {
@@ -26,35 +22,26 @@ export default function AdminAttendance() {
         setLoading(true);
         setError(null);
 
-        // Get selected class
-        const selectedClassId = localStorage.getItem('current_selected_class');
-        if (!selectedClassId) {
-          throw new Error('No class selected. Please add a class in Sync Data.');
+        if (!selectedClass) {
+          // If context is still loading, we might wait, but useClass has loading state.
+          // If not loading and no class, show empty.
+          setLoading(false);
+          return;
         }
 
-        // Get class info
-        const classSheets: ClassSheet[] = JSON.parse(
-          localStorage.getItem(`class_sheets_${user?.uid}`) || '[]'
-        );
-
-        const selectedClassData = classSheets.find(c => c.id === selectedClassId);
-        if (!selectedClassData) {
-          throw new Error('Selected class not found');
-        }
-
-        setCurrentClass(selectedClassData.className);
+        console.log(`Loading attendance for: ${selectedClass.className}`);
 
         // Get attendance data
         const data: AttendanceRecord[] = JSON.parse(
-          localStorage.getItem(`class_data_${selectedClassId}`) || '[]'
+          localStorage.getItem(`class_data_${selectedClass.id}`) || '[]'
         );
 
         if (!data || data.length === 0) {
-          throw new Error(`No attendance data for ${selectedClassData.className}`);
+          throw new Error(`No attendance data for ${selectedClass.className}. Click "Sync Now".`);
         }
 
         setRecords(data);
-        console.log(`✅ Loaded ${data.length} records for ${selectedClassData.className}`);
+        console.log(`✅ Loaded ${data.length} records for ${selectedClass.className}`);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load attendance data';
         console.error('Error loading attendance data:', err);
@@ -66,7 +53,7 @@ export default function AdminAttendance() {
     };
 
     loadAttendanceData();
-  }, [user?.uid]);
+  }, [user?.uid, selectedClass]);
 
   const exportCSV = () => {
     if (!records || records.length === 0) {
@@ -80,7 +67,7 @@ export default function AdminAttendance() {
     const headers = ['Name', 'Roll No', 'Date', 'Time', 'Status', 'Source'];
     const csvContent = [
       headers.join(','),
-      ...records.map(record => 
+      ...records.map(record =>
         [record.name, record.rollNo, record.date, record.time, record.status, record.source].join(',')
       )
     ].join('\n');
@@ -89,7 +76,7 @@ export default function AdminAttendance() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `attendance_${currentClass}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `attendance_${selectedClass?.className}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
 
@@ -150,7 +137,7 @@ export default function AdminAttendance() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Attendance Records</h1>
           <p className="text-muted-foreground mt-1">
-            Class: <span className="font-semibold text-foreground">{currentClass}</span>
+            Class: <span className="font-semibold text-foreground">{selectedClass?.className || 'Select a class'}</span>
           </p>
         </div>
         <div className="flex gap-2">
@@ -169,8 +156,8 @@ export default function AdminAttendance() {
         <CardHeader>
           <CardTitle>All Attendance Records</CardTitle>
           <CardDescription>
-            {records && records.length > 0 
-              ? `Showing ${records.length} records for ${currentClass}`
+            {records && records.length > 0
+              ? `Showing ${records.length} records for ${selectedClass?.className}`
               : 'No attendance records available'
             }
           </CardDescription>

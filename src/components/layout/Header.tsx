@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui/button';
@@ -14,28 +14,28 @@ export function Header({ onMenuToggle, menuOpen }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="flex items-center justify-between h-14 md:h-16 px-3 sm:px-4 md:px-6 lg:px-8 gap-2 md:gap-4">
+    <header className="sticky top-0 z-40 w-full border-b border-border/40 glass bg-opacity-70">
+      <div className="flex items-center justify-between h-16 px-4 md:px-6 gap-4">
         {/* Left side - Menu button (mobile only) + Welcome text */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3">
           {/* Menu button - visible on mobile only */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden flex-shrink-0 h-9 w-9"
+            className="md:hidden flex-shrink-0 -ml-2"
             onClick={onMenuToggle}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-6 h-6" />
           </Button>
-          
+
           {/* Welcome text */}
-          <span className="text-sm md:text-base font-medium text-foreground truncate">
-            
+          <span className="text-sm font-medium text-foreground/80 hidden sm:inline-block animate-fade-in">
+            {user ? `Welcome, ${user.name.split(' ')[0]}` : 'Welcome Back'}
           </span>
         </div>
 
         {/* Right side - User info and controls */}
-        <div className="flex items-center gap-2 md:gap-4 ml-auto flex-shrink-0">
+        <div className="flex items-center gap-2 md:gap-3">
           {user && (
             <div className="flex items-center gap-2 md:gap-3 min-w-0">
               <div className="text-right min-w-0 hidden sm:block">

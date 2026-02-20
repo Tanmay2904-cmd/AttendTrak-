@@ -1,38 +1,35 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { UserRole } from '@/types';
-import { Loader2 } from 'lucide-react';
+import { ReactNode } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { UserRole } from "@/types";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
-  allowedRoles?: UserRole[];
+  allowedRoles: UserRole[];
+  children?: ReactNode;
+  requireSuperAdmin?: boolean;
 }
 
-export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const location = useLocation();
+export default function ProtectedRoute({ allowedRoles, children, requireSuperAdmin }: ProtectedRouteProps) {
+  const { user, isAuthenticated, isLoading, isSuperAdmin } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/auth" replace />;
   }
 
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    // Redirect to appropriate dashboard based on role
-    const redirectPath = user.role === 'admin' ? '/admin' : '/dashboard';
-    return <Navigate to={redirectPath} replace />;
+  if (!allowedRoles.includes(user.role)) {
+    // Redirect based on their actual role
+    if (user.role === "admin") return <Navigate to="/admin" replace />;
+    if (user.role === "user") return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
-  return <>{children}</>;
+  if (requireSuperAdmin && !isSuperAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return children ? <>{children}</> : <Outlet />;
 }

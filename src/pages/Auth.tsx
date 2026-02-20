@@ -42,21 +42,21 @@ export default function Auth() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [registerMode, setRegisterMode] = useState<'admin' | 'student'>('student');
-  
+
   // Login form
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  
+
   // Admin Register form
   const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
-  
+
   // Student Register form
   const [selectedStudent, setSelectedStudent] = useState('');
   const [studentEmail, setStudentEmail] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
-  
+
   const { login, register, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
@@ -66,7 +66,7 @@ export default function Auth() {
       try {
         setLoadingStudents(true);
         const records = await fetchAttendanceFromSheet();
-        
+
         const uniqueStudents = Array.from(
           new Map(
             records.map(r => [
@@ -79,7 +79,7 @@ export default function Auth() {
             ])
           ).values()
         );
-        
+
         setStudents(uniqueStudents);
       } catch (error) {
         console.error('Error loading students:', error);
@@ -162,7 +162,7 @@ export default function Auth() {
 
     // Get selected student data
     const selectedStudentData = students.find(s => s.rollNo === selectedStudent);
-    
+
     if (!selectedStudentData) {
       setErrors({ student: 'Invalid student selection' });
       return;
@@ -173,7 +173,7 @@ export default function Auth() {
       setErrors({ student_email: 'Please enter a valid email address' });
       return;
     }
-    
+
     if (!studentPassword || studentPassword.length < 1) {
       setErrors({ student_password: 'Password is required' });
       return;
@@ -197,45 +197,62 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
+    <div className="min-h-screen w-full flex">
+      {/* Left Side - Visual & Branding */}
+      <div className="hidden lg:flex w-1/2 bg-slate-900 relative overflow-hidden flex-col justify-between p-12 text-white">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')] bg-cover bg-center opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/90 via-purple-600/90 to-slate-900/90" />
+
+        <div className="relative z-10">
+          <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-6 border border-white/20">
+            <ClipboardCheck className="w-7 h-7 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight mb-2">AttendTrack</h1>
+          <p className="text-indigo-200 text-lg">Next Gen Attendance Management</p>
+        </div>
+
+        <div className="relative z-10 space-y-6">
+          <blockquote className="space-y-2">
+            <p className="text-xl font-medium leading-relaxed">
+              "This platform has completely transformed how we manage classroom attendance. The real-time syncing with Google Sheets is a game changer."
+            </p>
+            <footer className="text-indigo-200">
+              — Sarah Chen, University Administrator
+            </footer>
+          </blockquote>
+        </div>
       </div>
 
-      <Card className="w-full max-w-md relative animate-scale-in">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-14 h-14 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
-            <ClipboardCheck className="w-8 h-8 text-primary-foreground" />
+      {/* Right Side - Form */}
+      <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-8 bg-background animate-in relative">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center lg:text-left">
+            <h2 className="text-3xl font-bold tracking-tight">Welcome back</h2>
+            <p className="text-muted-foreground mt-2">
+              Enter your credentials to access your dashboard
+            </p>
           </div>
-          <div>
-            <CardTitle className="text-2xl font-bold">AttendTrack</CardTitle>
-            <CardDescription className="mt-2">
-              Attendance Management System
-            </CardDescription>
-          </div>
-        </CardHeader>
 
-        <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="student">Student Register</TabsTrigger>
-              <TabsTrigger value="admin">Admin Register</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 mb-8 h-12 p-1 bg-muted/50 rounded-xl">
+              <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Login</TabsTrigger>
+              <TabsTrigger value="student" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Student</TabsTrigger>
+              <TabsTrigger value="admin" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Admin</TabsTrigger>
             </TabsList>
 
             {/* LOGIN TAB */}
-            <TabsContent value="login">
+            <TabsContent value="login" className="space-y-6 animate-in hover:none">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder="admin@school.edu"
+                    placeholder="name@school.edu"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     disabled={isLoading}
+                    className="h-11 bg-muted/30 border-input focus-visible:ring-indigo-500"
                   />
                   {errors.login_email && (
                     <p className="text-sm text-destructive">{errors.login_email}</p>
@@ -243,7 +260,10 @@ export default function Auth() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="login-password">Password</Label>
+                    <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500 font-medium">Forgot?</a>
+                  </div>
                   <div className="relative">
                     <Input
                       id="login-password"
@@ -252,12 +272,13 @@ export default function Auth() {
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       disabled={isLoading}
+                      className="h-11 bg-muted/30 border-input focus-visible:ring-indigo-500 pr-10"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                      className="absolute right-0 top-0 h-11 w-11 text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -268,10 +289,14 @@ export default function Auth() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02]"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Signing in...
                     </>
                   ) : (
@@ -282,11 +307,11 @@ export default function Auth() {
             </TabsContent>
 
             {/* STUDENT REGISTER TAB */}
-            <TabsContent value="student">
+            <TabsContent value="student" className="space-y-6 animate-in">
               <form onSubmit={handleStudentRegister} className="space-y-4">
-                <div className="bg-green-50 p-3 rounded text-sm text-green-900 mb-4">
-                  <p><strong>Student Registration</strong></p>
-                  <p>Select your name from Google Sheets list</p>
+                <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-sm text-indigo-900 mb-4">
+                  <p className="font-semibold mb-1">Student Registration</p>
+                  <p className="text-indigo-700">Find your name in the list to create your account.</p>
                 </div>
 
                 <div className="space-y-2">
@@ -296,7 +321,7 @@ export default function Auth() {
                     onValueChange={setSelectedStudent}
                     disabled={isLoading || loadingStudents}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11 bg-muted/30 border-input">
                       <SelectValue placeholder={loadingStudents ? "Loading..." : "Select your name"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -327,6 +352,7 @@ export default function Auth() {
                     value={studentEmail}
                     onChange={(e) => setStudentEmail(e.target.value)}
                     disabled={isLoading}
+                    className="h-11 bg-muted/30 border-input"
                   />
                   {errors.student_email && (
                     <p className="text-sm text-destructive">{errors.student_email}</p>
@@ -334,7 +360,7 @@ export default function Auth() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="student-password">Password</Label>
+                  <Label htmlFor="student-password">Create Password</Label>
                   <div className="relative">
                     <Input
                       id="student-password"
@@ -343,12 +369,13 @@ export default function Auth() {
                       value={studentPassword}
                       onChange={(e) => setStudentPassword(e.target.value)}
                       disabled={isLoading}
+                      className="h-11 bg-muted/30 border-input pr-10"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                      className="absolute right-0 top-0 h-11 w-11 text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -359,10 +386,14 @@ export default function Auth() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" disabled={isLoading || loadingStudents}>
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02]"
+                  disabled={isLoading || loadingStudents}
+                >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Creating account...
                     </>
                   ) : (
@@ -373,22 +404,18 @@ export default function Auth() {
             </TabsContent>
 
             {/* ADMIN REGISTER TAB */}
-            <TabsContent value="admin">
+            <TabsContent value="admin" className="space-y-6 animate-in">
               <form onSubmit={handleAdminRegister} className="space-y-4">
-                <div className="bg-amber-50 p-3 rounded text-sm text-amber-900 mb-4">
-                  <p><strong>Admin Registration Only</strong></p>
-                  <p>Create new admin account</p>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="admin-name">Full Name</Label>
                   <Input
                     id="admin-name"
                     type="text"
-                    placeholder="John Admin"
+                    placeholder="John Doe"
                     value={registerName}
                     onChange={(e) => setRegisterName(e.target.value)}
                     disabled={isLoading}
+                    className="h-11 bg-muted/30 border-input"
                   />
                   {errors.admin_name && (
                     <p className="text-sm text-destructive">{errors.admin_name}</p>
@@ -400,10 +427,11 @@ export default function Auth() {
                   <Input
                     id="admin-email"
                     type="email"
-                    placeholder="admin@example.edu"
+                    placeholder="admin@school.edu"
                     value={registerEmail}
                     onChange={(e) => setRegisterEmail(e.target.value)}
                     disabled={isLoading}
+                    className="h-11 bg-muted/30 border-input"
                   />
                   {errors.admin_email && (
                     <p className="text-sm text-destructive">{errors.admin_email}</p>
@@ -420,12 +448,13 @@ export default function Auth() {
                       value={registerPassword}
                       onChange={(e) => setRegisterPassword(e.target.value)}
                       disabled={isLoading}
+                      className="h-11 bg-muted/30 border-input pr-10"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                      className="absolute right-0 top-0 h-11 w-11 text-muted-foreground hover:text-foreground"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -436,10 +465,14 @@ export default function Auth() {
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02]"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Creating account...
                     </>
                   ) : (
@@ -449,8 +482,12 @@ export default function Auth() {
               </form>
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+
+          <p className="text-center text-sm text-muted-foreground mt-8">
+            By clicking continue, you agree to our <a href="#" className="underline hover:text-indigo-600">Terms of Service</a> and <a href="#" className="underline hover:text-indigo-600">Privacy Policy</a>.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

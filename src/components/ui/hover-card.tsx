@@ -1,7 +1,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-interface HoverCardProps extends React.HTMLAttributes<HTMLDivElement> {}
+type HoverCardProps = React.HTMLAttributes<HTMLDivElement>;
 
 const HoverCard = React.forwardRef<HTMLDivElement, HoverCardProps>(
   ({ className, ...props }, ref) => (

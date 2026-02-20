@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AttendanceBarChart } from '@/components/charts/AttendanceBarChart';
 import { AttendanceLineChart } from '@/components/charts/AttendanceLineChart';
@@ -8,19 +8,18 @@ import { Progress } from '@/components/ui/progress';
 import { Loader, AlertCircle } from 'lucide-react';
 import { StudentAttendance, AttendanceRecord, MonthlyAttendance } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { useClass } from '@/context/ClassContext';
 
-interface ClassSheet {
-  id: string;
-  className: string;
-}
+
 
 export default function AdminAnalytics() {
   const { user } = useAuth();
+  const { selectedClass } = useClass();
   const [studentStats, setStudentStats] = useState<StudentAttendance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyAttendance[]>([]);
-  const [currentClass, setCurrentClass] = useState<string>('');
+  // We can use selectedClass.className directly
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,23 +27,16 @@ export default function AdminAnalytics() {
         setLoading(true);
         setError(null);
 
-        // Get selected class
-        const selectedClassId = localStorage.getItem('current_selected_class');
-        if (!selectedClassId) {
-          throw new Error('No class selected. Please add a class first.');
+        if (!selectedClass) {
+          // Context handles loading state, so if we are here and not loading, means no class selected
+          // But wait for context loading? useClass provides loading state.
+          // However, if we simply return here, we might show empty state.
+          setLoading(false);
+          return;
         }
 
-        // Get class info
-        const classSheets: ClassSheet[] = JSON.parse(
-          localStorage.getItem(`class_sheets_${user?.uid}`) || '[]'
-        );
-
-        const selectedClassData = classSheets.find(c => c.id === selectedClassId);
-        if (!selectedClassData) {
-          throw new Error('Selected class not found');
-        }
-
-        setCurrentClass(selectedClassData.className);
+        const selectedClassId = selectedClass.id;
+        console.log(`Analytics loading for: ${selectedClass.className} (${selectedClassId})`);
 
         // Get attendance records for this class
         const attendanceRecords: AttendanceRecord[] = JSON.parse(
@@ -52,7 +44,7 @@ export default function AdminAnalytics() {
         );
 
         if (!attendanceRecords || attendanceRecords.length === 0) {
-          throw new Error(`No data for ${selectedClassData.className}`);
+          throw new Error(`No data for ${selectedClass.className}. Click "Sync Now" in Sync Data.`);
         }
 
         // Calculate monthly data
@@ -61,7 +53,7 @@ export default function AdminAnalytics() {
 
         // Transform to student stats
         const studentMap = new Map<string, StudentAttendance>();
-        
+
         attendanceRecords.forEach(record => {
           const key = record.rollNo;
           if (!studentMap.has(key)) {
@@ -80,19 +72,19 @@ export default function AdminAnalytics() {
               userId: record.userId,
             });
           }
-          
+
           const student = studentMap.get(key)!;
           if (record.status === 'present') student.presentDays!++;
           else if (record.status === 'absent') student.absentDays!++;
           else if (record.status === 'late') student.lateDays!++;
         });
-        
+
         const students = Array.from(studentMap.values()).map(student => {
           const totalDays = (student.presentDays || 0) + (student.absentDays || 0) + (student.lateDays || 0);
-          const percentage = totalDays > 0 
+          const percentage = totalDays > 0
             ? Math.round(((student.presentDays || 0) + (student.lateDays || 0)) / totalDays * 100)
             : 0;
-          
+
           return {
             ...student,
             percentage,
@@ -101,7 +93,7 @@ export default function AdminAnalytics() {
             status: percentage < 75 ? 'Defaulter' : 'Regular',
           };
         });
-        
+
         setStudentStats(students);
       } catch (err) {
         console.error('Error:', err);
@@ -147,7 +139,7 @@ export default function AdminAnalytics() {
       <div className="space-y-8 animate-fade-in">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground mt-1">Class: <span className="font-semibold">{currentClass}</span></p>
+          <p className="text-muted-foreground mt-1">Class: <span className="font-semibold">{selectedClass?.className}</span></p>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -161,14 +153,14 @@ export default function AdminAnalytics() {
   const totalPresent = studentStats?.reduce((sum, s) => sum + (s.presentDays || 0), 0) || 0;
   const totalAbsent = studentStats?.reduce((sum, s) => sum + (s.absentDays || 0), 0) || 0;
   const totalLate = studentStats?.reduce((sum, s) => sum + (s.lateDays || 0), 0) || 0;
-  const avgAttendance = studentStats && studentStats.length > 0 
+  const avgAttendance = studentStats && studentStats.length > 0
     ? Math.round(studentStats.reduce((sum, s) => sum + (s.percentage || 0), 0) / studentStats.length)
     : 0;
 
-  const topPerformers = studentStats 
+  const topPerformers = studentStats
     ? [...studentStats]
-        .sort((a, b) => (b.percentage || 0) - (a.percentage || 0))
-        .slice(0, 5)
+      .sort((a, b) => (b.percentage || 0) - (a.percentage || 0))
+      .slice(0, 5)
     : [];
 
   const defaulters = studentStats
@@ -179,7 +171,7 @@ export default function AdminAnalytics() {
     <div className="space-y-8 animate-fade-in">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-        <p className="text-muted-foreground mt-1">Class: <span className="font-semibold">{currentClass}</span></p>
+        <p className="text-muted-foreground mt-1">Class: <span className="font-semibold">{selectedClass?.className}</span></p>
       </div>
 
       {/* Summary Stats */}

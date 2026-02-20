@@ -20,6 +20,9 @@ export interface User {
   role: 'admin' | 'user';
   rollNo?: string;
   createdAt?: string;
+  sheetUrl?: string;
+  apiKey?: string;
+  className?: string;
 }
 
 export type UserRole = 'admin' | 'user';
@@ -75,4 +78,15 @@ export interface DashboardStats {
   attendancePercentage: number;
   averageAttendance: number;
   defaulters: number;
+}
+
+export interface ClassSheet {
+  id: string;
+  className: string;
+  recordsCount: number;
+  sheetId?: string;
+  sheetUrl?: string;
+  adminId?: string;
+  lastSyncedAt?: string;
+  isAutoSync?: boolean;
 }
