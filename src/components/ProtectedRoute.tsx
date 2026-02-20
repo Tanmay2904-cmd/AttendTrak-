@@ -22,6 +22,7 @@ export default function ProtectedRoute({ allowedRoles, children, requireSuperAdm
 
   if (!allowedRoles.includes(user.role)) {
     // Redirect based on their actual role
+    if (user.role === "super_admin") return <Navigate to="/super-admin" replace />;
     if (user.role === "admin") return <Navigate to="/admin" replace />;
     if (user.role === "user") return <Navigate to="/dashboard" replace />;
     return <Navigate to="/auth" replace />;

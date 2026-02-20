@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { AttendanceTable } from '@/components/dashboard/AttendanceTable';
 import { AttendanceRecord } from '@/types';
-import { Download, FileSpreadsheet, Loader, AlertCircle } from 'lucide-react';
+import { FileSpreadsheet, Loader, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useClass } from '@/context/ClassContext';
@@ -86,12 +86,7 @@ export default function AdminAttendance() {
     });
   };
 
-  const exportPDF = () => {
-    toast({
-      title: 'PDF Export',
-      description: 'PDF export functionality coming soon',
-    });
-  };
+
 
   if (loading) {
     return (
@@ -145,10 +140,7 @@ export default function AdminAttendance() {
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Export CSV
           </Button>
-          <Button variant="outline" onClick={exportPDF}>
-            <Download className="w-4 h-4 mr-2" />
-            Export PDF
-          </Button>
+
         </div>
       </div>
 

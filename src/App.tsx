@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import SuperAdminDashboard from '@/pages/admin/SuperAdminDashboard';
 import AdminCreation from '@/pages/admin/AdminCreation';
+import SetupSuperAdmin from '@/pages/admin/SetupSuperAdmin';
 
 // Pages
 import Index from "./pages/Index";
@@ -49,7 +50,7 @@ const App = () => (
                 <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute allowedRoles={['admin']}>
+                    <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                       <DashboardLayout />
                     </ProtectedRoute>
                   }
@@ -66,7 +67,7 @@ const App = () => (
                 <Route
                   path="/super-admin"
                   element={
-                    <ProtectedRoute allowedRoles={['admin']} requireSuperAdmin={true}>
+                    <ProtectedRoute allowedRoles={['admin', 'super_admin']} requireSuperAdmin={true}>
                       <SuperAdminDashboard />
                     </ProtectedRoute>
                   }
@@ -87,6 +88,7 @@ const App = () => (
                 </Route>
 
                 {/* Catch-all */}
+                <Route path="/setup-super-admin" element={<SetupSuperAdmin />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

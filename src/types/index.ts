@@ -17,15 +17,16 @@ export interface User {
   uid?: string;
   name: string;
   email: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'super_admin';
   rollNo?: string;
   createdAt?: string;
   sheetUrl?: string;
   apiKey?: string;
   className?: string;
+  isApproved?: boolean;
 }
 
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'user' | 'super_admin';
 
 export interface AuthState {
   isAuthenticated: boolean;

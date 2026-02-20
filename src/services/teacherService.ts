@@ -7,7 +7,7 @@ export interface TeacherConfig {
     className: string;
     adminName: string;
     adminEmail: string;
-    role: "admin";
+    role: "admin" | "super_admin";
 }
 
 export async function saveTeacherSheetMapping(
@@ -16,7 +16,7 @@ export async function saveTeacherSheetMapping(
 ) {
     await setDoc(
         doc(db, "users", adminId),
-        { ...config, role: "admin" },
+        config,
         { merge: true }
     );
 }

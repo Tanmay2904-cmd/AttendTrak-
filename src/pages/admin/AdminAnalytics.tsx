@@ -90,7 +90,7 @@ export default function AdminAnalytics() {
             percentage,
             attendance: percentage,
             isDefaulter: percentage < 75,
-            status: percentage < 75 ? 'Defaulter' : 'Regular',
+            status: (percentage < 75 ? 'Defaulter' : 'Regular') as 'Defaulter' | 'Regular',
           };
         });
 
@@ -104,7 +104,7 @@ export default function AdminAnalytics() {
     };
 
     fetchData();
-  }, [user?.uid]);
+  }, [user?.uid, selectedClass]);
 
   if (loading) {
     return (

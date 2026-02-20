@@ -94,8 +94,13 @@ export default function Auth() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const redirectPath = user.role === 'admin' ? '/admin' : '/dashboard';
-      navigate(redirectPath, { replace: true });
+      if (user.role === 'super_admin') {
+        navigate('/super-admin', { replace: true });
+      } else if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -208,23 +213,14 @@ export default function Auth() {
             <ClipboardCheck className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-2">AttendTrack</h1>
-          <p className="text-indigo-200 text-lg">Next Gen Attendance Management</p>
-        </div>
-
-        <div className="relative z-10 space-y-6">
-          <blockquote className="space-y-2">
-            <p className="text-xl font-medium leading-relaxed">
-              "This platform has completely transformed how we manage classroom attendance. The real-time syncing with Google Sheets is a game changer."
-            </p>
-            <footer className="text-indigo-200">
-              — Sarah Chen, University Administrator
-            </footer>
-          </blockquote>
+          <p className="text-indigo-200 text-lg max-w-sm leading-relaxed">
+            Efficiently manage class attendance, track student progress, and generate insightful reports—all in one place.
+          </p>
         </div>
       </div>
 
       {/* Right Side - Form */}
-      <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-8 bg-background animate-in relative">
+      <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-8 bg-background animate-in relative">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center lg:text-left">
             <h2 className="text-3xl font-bold tracking-tight">Welcome back</h2>

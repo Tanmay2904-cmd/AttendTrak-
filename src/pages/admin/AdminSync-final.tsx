@@ -158,7 +158,7 @@ export default function AdminSync() {
         className,
         adminName: user?.name || '',
         adminEmail: user?.email || '',
-        role: 'admin'
+        role: (user?.role === 'super_admin' || user?.role === 'admin') ? user.role : 'admin'
       });
 
       console.log(`✅ Mapping saved for ${user?.email}`);

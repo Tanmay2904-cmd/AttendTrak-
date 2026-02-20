@@ -29,7 +29,8 @@ export function ClassProvider({ children }: { children: ReactNode }) {
 
     // 🔹 Load Classes from Firestore (Real-time)
     useEffect(() => {
-        if (!user?.uid) {
+        // Skip for students (sheet- users) or if not logged in
+        if (!user?.uid || user.uid.startsWith('sheet-') || user.role === 'user') {
             setClasses([]);
             setSelectedClassId('');
             setItemsLoading(false);
@@ -101,7 +102,7 @@ export function ClassProvider({ children }: { children: ReactNode }) {
 
     // 🔹 Actions
     const addClass = async (newClass: ClassSheet) => {
-        if (!user?.uid) return;
+        if (!user?.uid || user.role === 'user') return;
         try {
             await setDoc(doc(db, 'users', user.uid, 'classes', newClass.id), newClass);
             // Auto-select if it's the first one
@@ -115,7 +116,7 @@ export function ClassProvider({ children }: { children: ReactNode }) {
     };
 
     const removeClass = async (classId: string) => {
-        if (!user?.uid) return;
+        if (!user?.uid || user.role === 'user') return;
         try {
             await deleteDoc(doc(db, 'users', user.uid, 'classes', classId));
             if (selectedClassId === classId) {
@@ -129,7 +130,7 @@ export function ClassProvider({ children }: { children: ReactNode }) {
     };
 
     const updateClass = async (updatedClass: ClassSheet) => {
-        if (!user?.uid) return;
+        if (!user?.uid || user.role === 'user') return;
         try {
             await setDoc(doc(db, 'users', user.uid, 'classes', updatedClass.id), updatedClass, { merge: true });
         } catch (error) {

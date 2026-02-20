@@ -25,7 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: true,
   });
 
-  const [isSuperAdmin] = useState(false);
   const { toast } = useToast();
 
   // 🔹 Firebase session restore
@@ -44,6 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userData = snap.data();
         role = userData.role || "admin";
       }
+
+
 
       setAuthState({
         user: {
@@ -85,11 +86,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             userData = snap.data();
             role = userData.role || "admin";
             console.log("User data fetched from Firestore.");
+
+            // CHECK APPROVAL STATUS
+            if (role === 'admin' && userData.isApproved === false) {
+              console.warn("Account pending approval.");
+              await signOut(auth);
+              throw new Error("Your account is pending approval by Super Admin.");
+            }
           } else {
             console.warn("User document not found in Firestore. Using default admin defaults.");
             // If doc doesn't exist but Auth does, we assume it's an admin who needs to sync.
           }
         } catch (firestoreError: any) {
+          if (firestoreError.message === "Your account is pending approval by Super Admin.") {
+            throw firestoreError;
+          }
           console.error("Firestore fetch failed (ignoring to allow login):", firestoreError.code, firestoreError.message);
           toast({
             variant: "default",
@@ -204,9 +215,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Add default admin fields
         newUser.adminName = name;
         // Optionally add schoolName if passed or default
+        // Check if super admin calling this (we can check context but here we assume self-reg if not passed)
+        // If registered via SuperAdminDashboard, we might want isApproved=true.
+        // But for generic `register` called from Auth.tsx, it's self-registration.
         newUser.schoolName = "School";
         newUser.sheetUrl = "";
         newUser.apiKey = "";
+        newUser.isApproved = false; // Require approval
       } else {
         // Student
         newUser.rollNo = studentId;
@@ -238,6 +253,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setAuthState({ user: null, token: null, isAuthenticated: false, isLoading: false });
   };
+
+  // Derive isSuperAdmin from user role to avoid state sync issues
+  const isSuperAdmin = authState.user?.role === 'super_admin';
 
   return (
     <AuthContext.Provider value={{ ...authState, login, logout, register, isSuperAdmin }}>

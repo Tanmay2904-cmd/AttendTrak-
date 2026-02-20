@@ -11,7 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useClass } from '@/context/ClassContext';
 import { fetchFromGoogleSheet, extractSheetIdFromUrl } from '@/lib/sheetService';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 
 interface DashboardStats {
   totalStudents: number;
@@ -153,6 +153,15 @@ export default function AdminDashboard() {
 
   // Not configured state
   if (!user?.sheetUrl || !user?.apiKey) {
+    // If Super Admin lands here without config, redirect them to their panel
+    if (user?.role === 'super_admin') {
+      // Use a small timeout or immediate effect to avoid flash if possible, 
+      // but returning null/redirect component is better.
+      // Since we are in render, we can't navigate immediately without useEffect, 
+      // but we can render the Navigate component.
+      return <Navigate to="/super-admin" replace />;
+    }
+
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Card className="w-full max-w-md">
@@ -162,7 +171,7 @@ export default function AdminDashboard() {
               Please configure your Google Sheet and API options to view the dashboard.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <Button onClick={() => navigate('/admin/sync')} className="w-full">
               Go to Settings
             </Button>
