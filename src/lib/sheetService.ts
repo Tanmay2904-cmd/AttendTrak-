@@ -252,7 +252,28 @@ export const fetchFromGoogleSheet = async (
  */
 export const fetchAttendanceFromSheet = async (): Promise<AttendanceRecord[]> => {
   const config = getSheetConfig();
-  return fetchFromGoogleSheet(config.sheetId, config.apiKey, config.range);
+
+  // Try to use the configured range by default (often Sheet1!A2:F)
+  try {
+    return await fetchFromGoogleSheet(config.sheetId, config.apiKey, config.range);
+  } catch (err: any) {
+    // If the error is about parsing range, the default sheet (e.g. "Sheet1") might not exist
+    if (err.message && err.message.includes('Unable to parse range')) {
+      console.warn('Default sheet tab not found. Attempting to find available tabs...');
+      try {
+        const tabs = await fetchSheetNames(config.sheetId, config.apiKey);
+        if (tabs && tabs.length > 0) {
+          const firstTabName = tabs[0];
+          console.log(`Using first available tab: ${firstTabName}`);
+          return await fetchFromGoogleSheet(config.sheetId, config.apiKey, `${firstTabName}!A2:F`);
+        }
+      } catch (tabErr) {
+        console.error('Could not fetch alternative sheet names:', tabErr);
+      }
+    }
+    // Re-throw if it wasn't a parse range error or if fallback failed
+    throw err;
+  }
 };
 
 
