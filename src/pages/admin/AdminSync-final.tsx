@@ -569,41 +569,35 @@ export default function AdminSync() {
       {selectedClassId && (
         <Card>
           <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <CardTitle>
-                  {classSheets.find(s => s.id === selectedClassId)?.className} — {activeTab}
-                </CardTitle>
-                <CardDescription>{selectedClassData.length} records</CardDescription>
-              </div>
+            <CardTitle>
+              {classSheets.find(s => s.id === selectedClassId)?.className} — {activeTab}
+            </CardTitle>
+            <CardDescription>{selectedClassData.length} records</CardDescription>
+          </CardHeader>
 
-              {/* Month / Tab Switcher */}
-              {availableTabs.length > 1 && (
-                <div className="flex flex-wrap gap-1">
-                  {isLoadingTabs ? (
-                    <span className="text-xs text-muted-foreground">Loading tabs...</span>
-                  ) : (
-                    availableTabs.map(tab => (
-                      <Button
-                        key={tab}
-                        size="sm"
-                        variant={activeTab === tab ? 'default' : 'outline'}
-                        className="text-xs h-7 px-3"
-                        onClick={() => handleManualSync(selectedClassId, tab)}
-                      >
-                        {tab}
-                      </Button>
-                    ))
-                  )}
+          {/* Month / Tab Switcher — full width, mobile-friendly */}
+          {availableTabs.length > 1 && (
+            <div className="px-6 pb-3">
+              {isLoadingTabs ? (
+                <span className="text-xs text-muted-foreground">Loading tabs...</span>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {availableTabs.map(tab => (
+                    <Button
+                      key={tab}
+                      size="sm"
+                      variant={activeTab === tab ? 'default' : 'outline'}
+                      className="text-xs h-8 px-4"
+                      onClick={() => handleManualSync(selectedClassId, tab)}
+                    >
+                      {tab}
+                    </Button>
+                  ))}
                 </div>
               )}
-              {availableTabs.length <= 1 && apiKey && (
-                <span className="text-xs text-muted-foreground italic">
-                  (Add API key above to enable tab switching)
-                </span>
-              )}
             </div>
-          </CardHeader>
+          )}
+
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
