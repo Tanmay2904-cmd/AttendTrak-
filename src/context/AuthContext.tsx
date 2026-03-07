@@ -31,6 +31,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
+        const studentSessionStr = localStorage.getItem("student_auth_session");
+        if (studentSessionStr) {
+          try {
+            const studentSession = JSON.parse(studentSessionStr);
+            setAuthState({
+              user: studentSession,
+              token: studentSession.uid,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            return;
+          } catch (e) {
+            console.error("Failed to parse student session", e);
+            localStorage.removeItem("student_auth_session");
+          }
+        }
+
         setAuthState({ user: null, token: null, isAuthenticated: false, isLoading: false });
         return;
       }
@@ -159,16 +176,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("Invalid credentials");
         }
 
+        const sessionUser = {
+          uid: `sheet-${matched.rollNo}`,
+          name: matched.name,
+          email: matched.email,
+          role: "user" as UserRole,
+          rollNo: matched.rollNo,
+          createdAt: new Date().toISOString(),
+          sheetUrl: matched.sheetId || "",
+        };
+
+        localStorage.setItem("student_auth_session", JSON.stringify(sessionUser));
+
         setAuthState({
-          user: {
-            uid: `sheet-${matched.rollNo}`,
-            name: matched.name,
-            email: matched.email,
-            role: "user",
-            rollNo: matched.rollNo,
-            createdAt: new Date().toISOString(),
-            sheetUrl: matched.sheetId || "",
-          },
+          user: sessionUser,
           token: `sheet-${matched.rollNo}`,
           isAuthenticated: true,
           isLoading: false,
@@ -257,6 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Logout error", error);
     }
+    localStorage.removeItem("student_auth_session");
     setAuthState({ user: null, token: null, isAuthenticated: false, isLoading: false });
   };
 
