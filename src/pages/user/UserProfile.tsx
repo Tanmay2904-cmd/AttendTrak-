@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
-import { fetchFromGoogleSheet } from '@/lib/sheetService';
+import { fetchFromGoogleSheet, fetchSheetNames, extractSheetIdFromUrl } from '@/lib/sheetService';
 import { calculateUserStats } from '@/lib/attendanceCalculations'; // ✅ Real calculations
+import { AttendanceRecord } from '@/types';
 import { User, Mail, Hash, Calendar, Award, AlertTriangle, Loader } from 'lucide-react';
 
 export default function UserProfile() {
@@ -24,12 +25,35 @@ export default function UserProfile() {
         setLoading(true);
 
         // ✅ Fetch from Google Sheets
-        const sheetId = user?.sheetUrl || import.meta.env.VITE_GOOGLE_SHEET_ID;
+        const rawSheetId = user?.sheetUrl || import.meta.env.VITE_GOOGLE_SHEET_ID;
         const apiKey = user?.apiKey || import.meta.env.VITE_GOOGLE_SHEETS_API_KEY;
 
-        if (!sheetId || !apiKey) return;
+        if (!rawSheetId || !apiKey) return;
 
-        const allRecords = await fetchFromGoogleSheet(sheetId, apiKey);
+        const sheetId = extractSheetIdFromUrl(rawSheetId) || rawSheetId;
+
+        // Fetch all tabs
+        let allRecords: AttendanceRecord[] = [];
+        try {
+          const tabs = await fetchSheetNames(sheetId, apiKey);
+          if (tabs.length > 0) {
+            const results = await Promise.allSettled(
+              tabs.map(tab => fetchFromGoogleSheet(sheetId, apiKey, `${tab}!A2:F`))
+            );
+            results.forEach(result => {
+              if (result.status === 'fulfilled') {
+                allRecords = [...allRecords, ...result.value];
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('Tab fetch failed, falling back to single tab:', err);
+        }
+
+        if (allRecords.length === 0) {
+          allRecords = await fetchFromGoogleSheet(sheetId, apiKey);
+        }
+
         const userRollNo = user?.rollNo;
 
         if (userRollNo) {

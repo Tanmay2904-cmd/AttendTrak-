@@ -8,7 +8,7 @@ import { AttendanceTable } from '@/components/dashboard/AttendanceTable';
 import { useAuth } from '@/context/AuthContext';
 import { fetchFromGoogleSheet, fetchSheetNames, extractSheetIdFromUrl } from '@/lib/sheetService';
 import { AttendanceRecord } from '@/types';
-import { Calendar, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, Clock, AlertTriangle, Loader } from 'lucide-react';
 
 interface UserStats {
   totalDays: number;
@@ -21,6 +21,7 @@ interface UserStats {
 
 export default function UserDashboard() {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [userAttendance, setUserAttendance] = useState<AttendanceRecord[]>([]);
   const [stats, setStats] = useState<UserStats>({
     totalDays: 0,
@@ -34,6 +35,7 @@ export default function UserDashboard() {
   useEffect(() => {
     const loadUserAttendance = async () => {
       try {
+        setLoading(true);
         // Get all attendance records from Google Sheets
         // Use user's specific sheet if available, otherwise default
         const rawSheetId = user?.sheetUrl || import.meta.env.VITE_GOOGLE_SHEET_ID;
@@ -99,6 +101,8 @@ export default function UserDashboard() {
       } catch (error) {
         console.error('Error loading user attendance:', error);
         setUserAttendance([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -106,6 +110,17 @@ export default function UserDashboard() {
   }, [user?.rollNo]);
 
   const recentAttendance = userAttendance.slice(0, 7);
+
+  if (loading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading your dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in w-full">
