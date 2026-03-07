@@ -341,21 +341,29 @@ export const fetchUsersFromSheet = async (): Promise<
     'Users!A2:F'
   )}?key=${config.apiKey}`;
 
-  const res = await fetch(url);
-  const data = await res.json();
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.error?.message || 'Failed to fetch users');
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Failed to fetch users');
+    }
+
+    const rows: string[][] = data.values || [];
+
+    return rows.map(row => ({
+      rollNo: row[0],
+      name: row[1],
+      email: row[2],
+      password: row[3],
+      role: (row[4] as 'admin' | 'user') || 'user',
+      sheetId: row[5] || undefined,
+    }));
+  } catch (error: any) {
+    // If it's a TypeError (Failed to fetch), it's likely a network issue
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('Network error: Please check your internet connection.');
+    }
+    throw error;
   }
-
-  const rows: string[][] = data.values || [];
-
-  return rows.map(row => ({
-    rollNo: row[0],
-    name: row[1],
-    email: row[2],
-    password: row[3],
-    role: (row[4] as 'admin' | 'user') || 'user',
-    sheetId: row[5] || undefined,
-  }));
 };

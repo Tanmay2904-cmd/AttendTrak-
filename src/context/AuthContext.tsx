@@ -182,9 +182,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error: any) {
       console.error("Login process failed:", error);
-      const errorMessage = error.message === "Invalid credentials"
-        ? "Invalid email or password"
-        : `Login failed: ${error.message}`;
+
+      let errorMessage = "An unexpected error occurred.";
+      if (error.message === "Invalid credentials") {
+        errorMessage = "Invalid email or password";
+      } else if (error.message.includes("Network error") || error.message.includes("Failed to fetch")) {
+        errorMessage = "Network error: Please check your internet connection and try again.";
+      } else if (error.message) {
+        errorMessage = `Login failed: ${error.message}`;
+      }
 
       toast({
         variant: "destructive",
