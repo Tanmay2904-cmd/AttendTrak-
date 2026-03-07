@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { fetchFromGoogleSheet } from '@/lib/sheetService';
+import { fetchFromGoogleSheet, fetchSheetNames } from '@/lib/sheetService';
 import { useAuth } from '@/context/AuthContext';
 import { saveTeacherSheetMapping } from '@/services/teacherService';
 import { extractSheetIdFromUrl } from '@/lib/sheetService';
@@ -40,19 +40,20 @@ export default function AdminSync() {
   const { classes: classSheets, refreshClasses, changeClass, selectedClassId, addClass, removeClass, updateClass } = useClass();
   const [sheetUrl, setSheetUrl] = useState('');
   const [className, setClassName] = useState('');
+  const [sheetTab, setSheetTab] = useState(''); // optional: default Sheet1
   const [apiKey, setApiKey] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isManualMigrating, setIsManualMigrating] = useState(false); // New state for manual migration
+  const [isManualMigrating, setIsManualMigrating] = useState(false);
   const [syncHistory, setSyncHistory] = useState<SyncRecord[]>([
     { id: 1, date: '2024-12-20 10:30 AM', records: 8, status: 'success' },
     { id: 2, date: '2024-12-19 09:45 AM', records: 8, status: 'success' },
     { id: 3, date: '2024-12-18 10:00 AM', records: 7, status: 'partial' },
   ]);
-  // Removed local classSheets state, using context instead
-  // const [classSheets, setClassSheets] = useState<ClassSheet[]>([]);
-  // selectedClass is managed by context, but we can keep a local one for this UI if needed, 
-  // but better to use context's selectedClassId
   const [selectedClassData, setSelectedClassData] = useState<any[]>([]);
+  // Multi-sheet tab support
+  const [availableTabs, setAvailableTabs] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('');
+  const [isLoadingTabs, setIsLoadingTabs] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -120,17 +121,18 @@ export default function AdminSync() {
         throw new Error('Invalid Google Sheets URL');
       }
 
-      console.log(`🔍 Syncing sheet: ${sheetId}`);
+      const tabName = sheetTab.trim() || 'Sheet1';
+      console.log(`🔍 Syncing sheet: ${sheetId}, tab: ${tabName}`);
 
-      const records = await fetchFromGoogleSheet(sheetId, apiKey);
+      const records = await fetchFromGoogleSheet(sheetId, apiKey, `${tabName}!A2:F`);
 
       if (records.length === 0) {
-        throw new Error('No attendance data found in the sheet.');
+        throw new Error(`No attendance data found in tab "${tabName}".`);
       }
 
       localStorage.setItem('google_sheets_api_key', apiKey);
 
-      // ✅ Create class sheet first
+      // ✅ Create class sheet
       const newClassSheet: ClassSheet = {
         id: `class-${Date.now()}`,
         adminId: user?.uid || '',
@@ -140,6 +142,7 @@ export default function AdminSync() {
         lastSyncedAt: new Date().toLocaleString(),
         recordsCount: records.length,
         isAutoSync: true,
+        sheetTab: tabName,
       };
 
       // ✅ Cloud Save via Context
@@ -173,11 +176,12 @@ export default function AdminSync() {
 
       toast({
         title: 'Class Added! ✅',
-        description: `${className} with ${records.length} records added successfully. Data will be remembered after logout.`,
+        description: `${className} (tab: ${tabName}) with ${records.length} records added successfully.`,
       });
 
       setSheetUrl('');
       setClassName('');
+      setSheetTab('');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -211,12 +215,25 @@ export default function AdminSync() {
     }
   };
 
-  const loadClassData = (classId: string) => {
+  const loadClassData = async (classId: string) => {
     const data = JSON.parse(localStorage.getItem(`class_data_${classId}`) || '[]');
     setSelectedClassData(data);
+
+    // Load available tabs for this class
+    const sheet = classSheets.find(s => s.id === classId);
+    if (sheet?.sheetId && apiKey) {
+      setIsLoadingTabs(true);
+      const tabs = await fetchSheetNames(sheet.sheetId, apiKey);
+      setAvailableTabs(tabs);
+      setActiveTab(sheet.sheetTab || 'Sheet1');
+      setIsLoadingTabs(false);
+    } else {
+      setAvailableTabs([]);
+      setActiveTab(sheet?.sheetTab || 'Sheet1');
+    }
   };
 
-  const handleManualSync = async (classId: string) => {
+  const handleManualSync = async (classId: string, tabOverride?: string) => {
     const sheet = classSheets.find(s => s.id === classId);
     if (!sheet) return;
 
@@ -229,28 +246,32 @@ export default function AdminSync() {
       return;
     }
 
+    const tabName = tabOverride || sheet.sheetTab || 'Sheet1';
+
     try {
-      const records = await fetchFromGoogleSheet(sheet.sheetId, apiKey);
+      const records = await fetchFromGoogleSheet(sheet.sheetId!, apiKey, `${tabName}!A2:F`);
       localStorage.setItem(`class_data_${classId}`, JSON.stringify(records));
 
-      // Update Cloud
+      // Update Cloud (update sheetTab too if changed)
       await updateClass({
         ...sheet,
         lastSyncedAt: new Date().toLocaleString(),
-        recordsCount: records.length
+        recordsCount: records.length,
+        sheetTab: tabName,
       });
 
-      loadClassData(classId);
+      setSelectedClassData(records);
+      setActiveTab(tabName);
 
       toast({
-        title: 'Synced! ✅',
-        description: `${sheet.className}: ${records.length} records`,
+        title: `Synced! ✅`,
+        description: `${sheet.className} → ${tabName}: ${records.length} records`,
       });
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to sync',
+        description: `Failed to sync tab "${tabName}"`,
       });
     }
   };
@@ -417,6 +438,21 @@ export default function AdminSync() {
           </div>
 
           <div>
+            <Label>
+              Sheet Tab Name{' '}
+              <span className="text-xs text-muted-foreground font-normal">(optional — default: Sheet1)</span>
+            </Label>
+            <Input
+              placeholder="e.g. January, February, Sheet2"
+              value={sheetTab}
+              onChange={(e) => setSheetTab(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Leave blank to use Sheet1. You can switch tabs after adding the class.
+            </p>
+          </div>
+
+          <div>
             <Label>API Key</Label>
             <div className="flex gap-2 flex-col sm:flex-row">
               <Input
@@ -533,12 +569,40 @@ export default function AdminSync() {
       {selectedClassId && (
         <Card>
           <CardHeader>
-            <CardTitle>
-              {classSheets.find(s => s.id === selectedClassId)?.className} Attendance
-            </CardTitle>
-            <CardDescription>
-              {selectedClassData.length} records
-            </CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <CardTitle>
+                  {classSheets.find(s => s.id === selectedClassId)?.className} — {activeTab}
+                </CardTitle>
+                <CardDescription>{selectedClassData.length} records</CardDescription>
+              </div>
+
+              {/* Month / Tab Switcher */}
+              {availableTabs.length > 1 && (
+                <div className="flex flex-wrap gap-1">
+                  {isLoadingTabs ? (
+                    <span className="text-xs text-muted-foreground">Loading tabs...</span>
+                  ) : (
+                    availableTabs.map(tab => (
+                      <Button
+                        key={tab}
+                        size="sm"
+                        variant={activeTab === tab ? 'default' : 'outline'}
+                        className="text-xs h-7 px-3"
+                        onClick={() => handleManualSync(selectedClassId, tab)}
+                      >
+                        {tab}
+                      </Button>
+                    ))
+                  )}
+                </div>
+              )}
+              {availableTabs.length <= 1 && apiKey && (
+                <span className="text-xs text-muted-foreground italic">
+                  (Add API key above to enable tab switching)
+                </span>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">

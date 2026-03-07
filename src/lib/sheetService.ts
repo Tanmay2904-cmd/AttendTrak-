@@ -294,11 +294,40 @@ export const canViewAttendanceRecord = (
   return false;
 };
 
+/**
+ * Fetch all sheet tab names from a Google Spreadsheet
+ * Uses the spreadsheets metadata endpoint (no range needed)
+ */
+export const fetchSheetNames = async (
+  sheetId: string,
+  apiKey: string
+): Promise<string[]> => {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?key=${apiKey}&fields=sheets.properties.title`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Failed to fetch sheet names');
+    }
+
+    const sheets: string[] = (data.sheets || []).map(
+      (s: any) => s.properties.title
+    );
+    console.log('📋 Sheet tabs found:', sheets);
+    return sheets;
+  } catch (error) {
+    console.error('❌ Error fetching sheet names:', error);
+    return ['Sheet1']; // fallback
+  }
+};
+
 export default {
   fetchFromGoogleSheet,
   fetchAttendanceFromSheet,
   filterAttendanceByRole,
   canViewAttendanceRecord,
+  fetchSheetNames,
 };
 /**
  * Fetch users from Google Sheets (Users tab)

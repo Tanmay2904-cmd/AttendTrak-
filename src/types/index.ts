@@ -90,4 +90,5 @@ export interface ClassSheet {
   adminId?: string;
   lastSyncedAt?: string;
   isAutoSync?: boolean;
+  sheetTab?: string; // Optional: sheet tab name (e.g. "January", "Sheet1"). Defaults to "Sheet1"
 }

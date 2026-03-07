@@ -9,6 +9,7 @@ import { Loader, AlertCircle } from 'lucide-react';
 import { StudentAttendance, AttendanceRecord, MonthlyAttendance } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { useClass } from '@/context/ClassContext';
+import { fetchFromGoogleSheet, fetchSheetNames } from '@/lib/sheetService';
 
 
 
@@ -28,9 +29,6 @@ export default function AdminAnalytics() {
         setError(null);
 
         if (!selectedClass) {
-          // Context handles loading state, so if we are here and not loading, means no class selected
-          // But wait for context loading? useClass provides loading state.
-          // However, if we simply return here, we might show empty state.
           setLoading(false);
           return;
         }
@@ -38,23 +36,53 @@ export default function AdminAnalytics() {
         const selectedClassId = selectedClass.id;
         console.log(`Analytics loading for: ${selectedClass.className} (${selectedClassId})`);
 
-        // Get attendance records for this class
-        const attendanceRecords: AttendanceRecord[] = JSON.parse(
-          localStorage.getItem(`class_data_${selectedClassId}`) || '[]'
-        );
+        let allRecords: AttendanceRecord[] = [];
 
-        if (!attendanceRecords || attendanceRecords.length === 0) {
+        // Try to load all tabs from Google Sheet for combined monthly data
+        const apiKey = localStorage.getItem('google_sheets_api_key') || '';
+        if (selectedClass.sheetId && apiKey) {
+          console.log('📊 Fetching all tabs for monthly analytics...');
+          const tabs = await fetchSheetNames(selectedClass.sheetId, apiKey);
+          console.log('Tabs found:', tabs);
+
+          // Fetch all tabs in parallel
+          const results = await Promise.allSettled(
+            tabs.map(tab =>
+              fetchFromGoogleSheet(selectedClass.sheetId!, apiKey, `${tab}!A2:F`)
+            )
+          );
+
+          results.forEach((result, i) => {
+            if (result.status === 'fulfilled') {
+              allRecords = [...allRecords, ...result.value];
+              console.log(`✅ Tab "${tabs[i]}": ${result.value.length} records`);
+            } else {
+              console.warn(`⚠️ Tab "${tabs[i]}" failed:`, result.reason);
+            }
+          });
+        }
+
+        // Fallback: use localStorage cached data for this class
+        if (allRecords.length === 0) {
+          allRecords = JSON.parse(
+            localStorage.getItem(`class_data_${selectedClassId}`) || '[]'
+          );
+        }
+
+        if (!allRecords || allRecords.length === 0) {
           throw new Error(`No data for ${selectedClass.className}. Click "Sync Now" in Sync Data.`);
         }
 
-        // Calculate monthly data
-        const monthly = calculateMonthlyAttendance(attendanceRecords);
+        console.log(`📊 Total combined records for analytics: ${allRecords.length}`);
+
+        // Calculate monthly data from ALL tabs combined
+        const monthly = calculateMonthlyAttendance(allRecords);
         setMonthlyData(monthly);
 
         // Transform to student stats
         const studentMap = new Map<string, StudentAttendance>();
 
-        attendanceRecords.forEach(record => {
+        allRecords.forEach(record => {
           const key = record.rollNo;
           if (!studentMap.has(key)) {
             studentMap.set(key, {
@@ -105,6 +133,7 @@ export default function AdminAnalytics() {
 
     fetchData();
   }, [user?.uid, selectedClass]);
+
 
   if (loading) {
     return (

@@ -9,7 +9,7 @@ import { AttendanceRecord, MonthlyAttendance } from '@/types';
 import { Users, UserCheck, UserX, Clock, AlertTriangle, TrendingUp, Loader } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useClass } from '@/context/ClassContext';
-import { fetchFromGoogleSheet, extractSheetIdFromUrl } from '@/lib/sheetService';
+import { fetchFromGoogleSheet, extractSheetIdFromUrl, fetchSheetNames } from '@/lib/sheetService';
 import { Button } from '@/components/ui/button';
 import { useNavigate, Navigate } from 'react-router-dom';
 
@@ -58,7 +58,32 @@ export default function AdminDashboard() {
       }
 
       console.log(`Loading data for sheet: ${targetSheetId} (${selectedClass?.className || 'Default'})`);
-      const attendanceRecords = await fetchFromGoogleSheet(targetSheetId, user.apiKey);
+
+      // Fetch ALL tabs and combine for complete monthly data
+      let attendanceRecords: AttendanceRecord[] = [];
+      try {
+        const tabs = await fetchSheetNames(targetSheetId, user.apiKey);
+        console.log(`📊 Tabs found: ${tabs.join(', ')}`);
+        if (tabs.length > 0) {
+          const results = await Promise.allSettled(
+            tabs.map(tab => fetchFromGoogleSheet(targetSheetId, user.apiKey, `${tab}!A2:F`))
+          );
+          results.forEach((result, i) => {
+            if (result.status === 'fulfilled') {
+              attendanceRecords = [...attendanceRecords, ...result.value];
+              console.log(`✅ Tab "${tabs[i]}": ${result.value.length} records`);
+            }
+          });
+        }
+      } catch (tabErr) {
+        console.warn('Tab fetch failed, falling back to single tab:', tabErr);
+      }
+
+      // Fallback: single tab if multi-tab fetch returned nothing
+      if (attendanceRecords.length === 0) {
+        const tabName = selectedClass?.sheetTab || 'Sheet1';
+        attendanceRecords = await fetchFromGoogleSheet(targetSheetId, user.apiKey, `${tabName}!A2:F`);
+      }
 
       console.log(`✅ Loaded ${attendanceRecords.length} records`);
 
