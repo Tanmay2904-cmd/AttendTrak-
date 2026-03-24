@@ -305,9 +305,9 @@ export default function Auth() {
             {/* STUDENT REGISTER TAB */}
             <TabsContent value="student" className="space-y-6 animate-in">
               <form onSubmit={handleStudentRegister} className="space-y-4">
-                <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl text-sm text-indigo-900 mb-4">
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 p-4 rounded-xl text-sm text-indigo-900 dark:text-indigo-200 mb-4">
                   <p className="font-semibold mb-1">Student Registration</p>
-                  <p className="text-indigo-700">Find your name in the list to create your account.</p>
+                  <p className="text-indigo-700 dark:text-indigo-300">Find your name in the list to create your account.</p>
                 </div>
 
                 <div className="space-y-2">

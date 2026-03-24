@@ -406,9 +406,9 @@ export default function AdminSync() {
           <CardDescription>Connect a Google Sheet for a class</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex gap-2">
-            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex gap-2">
+            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-900 dark:text-blue-200">
               <p className="font-semibold mb-1">Add your class's Google Sheet:</p>
               <ol className="list-decimal list-inside space-y-0.5 text-xs">
                 <li>Create Google Sheet with attendance data</li>
@@ -507,7 +507,7 @@ export default function AdminSync() {
               {classSheets.map((sheet) => (
                 <div
                   key={sheet.id}
-                  className={`border p-4 rounded-lg cursor-pointer transition ${selectedClassId === sheet.id ? 'bg-blue-50 border-blue-300' : 'hover:bg-slate-50'
+                  className={`border p-4 rounded-lg cursor-pointer transition ${selectedClassId === sheet.id ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                   onClick={() => {
                     changeClass(sheet.id);
@@ -612,7 +612,7 @@ export default function AdminSync() {
                 </thead>
                 <tbody>
                   {selectedClassData.slice(0, 50).map((record, idx) => (
-                    <tr key={idx} className="border-b hover:bg-slate-50">
+                    <tr key={idx} className="border-b hover:bg-slate-50 dark:hover:bg-slate-800">
                       <td className="p-2">{record.rollNo}</td>
                       <td className="p-2">{record.name}</td>
                       <td className="p-2">{record.date}</td>

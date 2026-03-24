@@ -136,7 +136,7 @@ export default function UserDashboard() {
             Below 75%
           </Badge>
         ) : (
-          <Badge variant="default" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 whitespace-nowrap flex-shrink-0 bg-green-600">
+          <Badge variant="default" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 whitespace-nowrap flex-shrink-0 bg-green-600 dark:bg-green-500 text-white">
             <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
             Good
           </Badge>
@@ -180,7 +180,7 @@ export default function UserDashboard() {
               <CardDescription className="text-xs sm:text-sm">Your overall attendance rate</CardDescription>
             </div>
             <div className="text-right flex-shrink-0">
-              <span className={`text-3xl sm:text-4xl font-bold ${stats.percentage >= 75 ? 'text-green-600' : 'text-red-600'}`}>
+              <span className={`text-3xl sm:text-4xl font-bold ${stats.percentage >= 75 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {stats.percentage}%
               </span>
               <p className="text-xs sm:text-sm text-muted-foreground">Min required: 75%</p>
@@ -244,20 +244,20 @@ export default function UserDashboard() {
         <CardContent>
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {/* Present */}
-            <div className="text-center p-2 sm:p-4 rounded-lg bg-green-50 border border-green-200">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-600">{stats.presentDays}</p>
+            <div className="text-center p-2 sm:p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-600 dark:text-green-400">{stats.presentDays}</p>
               <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2">Present</p>
             </div>
 
             {/* Absent */}
-            <div className="text-center p-2 sm:p-4 rounded-lg bg-red-50 border border-red-200">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-red-600">{stats.absentDays}</p>
+            <div className="text-center p-2 sm:p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-red-600 dark:text-red-400">{stats.absentDays}</p>
               <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2">Absent</p>
             </div>
 
             {/* Late */}
-            <div className="text-center p-2 sm:p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-yellow-600">{stats.lateDays}</p>
+            <div className="text-center p-2 sm:p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-yellow-600 dark:text-yellow-400">{stats.lateDays}</p>
               <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 sm:mt-2">Late</p>
             </div>
           </div>

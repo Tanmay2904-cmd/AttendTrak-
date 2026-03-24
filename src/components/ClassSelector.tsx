@@ -36,17 +36,17 @@ export function ClassSelector() {
         className="w-full sm:w-auto"
         onClick={() => setIsOpen(!isOpen)}
       >
-        📚 {selectedClass?.className || 'Select Class'}
+        {selectedClass?.className || 'Select Class'}
         <ChevronDown className="w-4 h-4 ml-2" />
       </Button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-56 bg-white border rounded-lg shadow-lg z-50">
+        <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-lg shadow-lg z-50">
           {classes.map((cls) => (
             <button
               key={cls.id}
               onClick={() => handleSelectClass(cls.id)}
-              className={`w-full text-left px-4 py-2 hover:bg-slate-100 transition ${selectedClass?.id === cls.id ? 'bg-blue-50 font-semibold' : ''
+              className={`w-full text-left px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition ${selectedClass?.id === cls.id ? 'bg-blue-50 dark:bg-blue-900/20 font-semibold' : ''
                 }`}
             >
               <p className="font-medium">{cls.className}</p>

@@ -173,20 +173,20 @@ export default function AdminStudents() {
                         </div>
                       </td>
                       <td className="p-3 text-center">
-                        <Badge variant={student.percentage < 75 ? "destructive" : "outline"} className={student.percentage >= 75 ? "bg-green-50 text-green-700 hover:bg-green-100 border-green-200" : ""}>
+                        <Badge variant={student.percentage < 75 ? "destructive" : "outline"} className={student.percentage >= 75 ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800" : ""}>
                           {student.percentage}%
                         </Badge>
                       </td>
-                      <td className="p-3 text-center text-green-600">{student.present}</td>
-                      <td className="p-3 text-center text-red-600">{student.absent}</td>
-                      <td className="p-3 text-center text-yellow-600">{student.late}</td>
+                      <td className="p-3 text-center text-green-600 dark:text-green-400">{student.present}</td>
+                      <td className="p-3 text-center text-red-600 dark:text-red-400">{student.absent}</td>
+                      <td className="p-3 text-center text-yellow-600 dark:text-yellow-400">{student.late}</td>
                       <td className="p-3">
                         {student.percentage < 75 ? (
                           <div className="flex items-center text-destructive text-xs font-medium">
                             <UserX className="w-3 h-3 mr-1" /> Defaulter
                           </div>
                         ) : (
-                          <div className="flex items-center text-green-600 text-xs font-medium">
+                          <div className="flex items-center text-green-600 dark:text-green-400 text-xs font-medium">
                             <User className="w-3 h-3 mr-1" /> Regular
                           </div>
                         )}

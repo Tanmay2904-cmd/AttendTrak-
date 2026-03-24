@@ -182,15 +182,15 @@ export default function AdminCreation() {
   // If not super admin, show access denied
   if (!isSuperAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/50 dark:to-red-900/50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="bg-red-100 p-3 rounded-full">
-                <AlertCircle className="w-8 h-8 text-red-600" />
+              <div className="bg-red-100 dark:bg-red-900/50 p-3 rounded-full">
+                <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
               </div>
             </div>
-            <CardTitle className="text-red-600">Access Denied</CardTitle>
+            <CardTitle className="text-red-600 dark:text-red-400">Access Denied</CardTitle>
             <CardDescription>
               You don't have permission to access this page. Only Super Admins can create and manage admins.
             </CardDescription>
@@ -210,14 +210,14 @@ export default function AdminCreation() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-950 dark:via-background dark:to-slate-950">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Admin Management
           </h1>
-          <p className="text-gray-600">Create and manage teacher accounts</p>
+          <p className="text-gray-600 dark:text-gray-400">Create and manage teacher accounts</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
@@ -225,8 +225,8 @@ export default function AdminCreation() {
           <Card className="shadow-lg">
             <CardHeader>
               <div className="flex items-center gap-3 mb-2">
-                <div className="bg-blue-100 p-2 rounded-lg">
-                  <UserPlus className="w-6 h-6 text-blue-600" />
+                <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-lg">
+                  <UserPlus className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
                   <CardTitle>Create New Admin</CardTitle>
@@ -343,8 +343,8 @@ export default function AdminCreation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <Users className="w-6 h-6 text-green-600" />
+                  <div className="bg-green-100 dark:bg-green-900/50 p-2 rounded-lg">
+                    <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <CardTitle>Existing Admins</CardTitle>
@@ -365,10 +365,10 @@ export default function AdminCreation() {
                   </div>
                 ) : (
                   getAdmins().map((admin: { id: string; name: string; email: string; role: string; createdAt: string }) => (
-                    <div key={admin.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div key={admin.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                       <div className="flex items-center space-x-3">
-                        <div className="bg-blue-100 p-2 rounded-full">
-                          <Shield className="w-4 h-4 text-blue-600" />
+                        <div className="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-full">
+                          <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">{admin.name}</p>

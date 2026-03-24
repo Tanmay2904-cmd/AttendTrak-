@@ -162,23 +162,23 @@ export default function SuperAdminDashboard() {
 
 
       {/* Pending Approvals */}
-      <Card className="border-orange-200 bg-orange-50">
+      <Card className="border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-900/10">
         <CardHeader>
-          <CardTitle className="text-orange-700 flex items-center gap-2">
+          <CardTitle className="text-orange-700 dark:text-orange-500 flex items-center gap-2">
             <Shield className="w-5 h-5" />
             Pending Approvals ({pendingAdmins.length})
           </CardTitle>
-          <CardDescription className="text-orange-600">
+          <CardDescription className="text-orange-600 dark:text-orange-400">
             Teachers waiting for approval
           </CardDescription>
         </CardHeader>
         <CardContent>
           {pendingAdmins.length === 0 ? (
-            <p className="text-orange-800/60 text-sm italic">No pending requests at the moment.</p>
+            <p className="text-orange-800/60 dark:text-orange-200/50 text-sm italic">No pending requests at the moment.</p>
           ) : (
             <div className="space-y-3">
               {pendingAdmins.map(admin => (
-                <div key={admin.id} className="bg-white border p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
+                <div key={admin.id} className="bg-card border p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-sm">
                   <div>
                     <p className="font-semibold">{admin.name}</p>
                     <p className="text-sm text-muted-foreground">{admin.email}</p>

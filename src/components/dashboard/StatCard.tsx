@@ -19,17 +19,17 @@ export function StatCard({
   variant = 'default',
 }: StatCardProps) {
   const variantClasses = {
-    default: 'bg-blue-50 border-blue-200',
-    success: 'bg-green-50 border-green-200',
-    danger: 'bg-red-50 border-red-200',
-    warning: 'bg-yellow-50 border-yellow-200',
+    default: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+    success: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+    danger: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800',
   };
 
   const iconClasses = {
-    default: 'text-blue-600',
-    success: 'text-green-600',
-    danger: 'text-red-600',
-    warning: 'text-yellow-600',
+    default: 'text-blue-600 dark:text-blue-400',
+    success: 'text-green-600 dark:text-green-400',
+    danger: 'text-red-600 dark:text-red-400',
+    warning: 'text-yellow-600 dark:text-yellow-400',
   };
 
   return (

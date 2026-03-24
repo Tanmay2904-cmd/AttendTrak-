@@ -106,9 +106,9 @@ export default function UserAttendance() {
       </div>
 
       {/* Security Notice */}
-      <Alert className="border-blue-200 bg-blue-50">
-        <Shield className="h-4 w-4" />
-        <AlertDescription className="text-blue-900">
+      <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+        <Shield className="h-4 w-4 dark:text-blue-400" />
+        <AlertDescription className="text-blue-900 dark:text-blue-200">
           <strong>Protected Data:</strong> You can only view your own attendance records.
           All data is encrypted and only accessible to authorized users.
         </AlertDescription>
